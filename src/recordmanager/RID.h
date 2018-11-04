@@ -20,6 +20,11 @@ public:
         pageID = _pageID;
         slotID = _slotID;
     }
+    
+    void setRID(int pageID, int slotID) {
+        _pageID = pageID;
+        _slotID = slotID;
+    }
 };
 
 

@@ -60,7 +60,7 @@ int RM_Manager::openFile(const char* filename, RM_FileHandle* handle)
 
 int RM_Manager::closeFile(RM_FileHandle *handle)
 {
-    if (!handle->isOpen) return 0;
+    if (!handle->isOpen()) return 0;
     if (handle->isHeaderModify()) {
         int index;
         int pageID = 0;

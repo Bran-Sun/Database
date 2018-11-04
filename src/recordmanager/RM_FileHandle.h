@@ -11,6 +11,7 @@
 #include "../bufmanager/BufPageManager.h"
 #include <list>
 #include <vector>
+#include <set>
 
 class RM_FileHandle
 {
@@ -20,10 +21,13 @@ private:
     BufPageManager *_bpm;
     int _recordSize, _recordEachPage, _pageNum;
     std::list<int> _emptyPageList;
-    std::vector<int> _modifyIndex;
+    std::set<int> _modifyIndex, _emptyPageSet;
 
 private:
     void _forcePage(int index);
+    int _getEmptySlot(BufType b);
+    bool _checkOriginEmpty(int pageID);
+    void _setEmptySlot(BufType b, int slot);
     
 public:
     RM_FileHandle() {
