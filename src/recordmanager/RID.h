@@ -8,7 +8,18 @@
 
 class RID
 {
-
+private:
+    int _pageID, _slotID;
+public:
+    RID(int pageID, int slotID) {
+        _pageID = pageID;
+        _slotID = slotID;
+    }
+    
+    void getRID(int &pageID, int &slotID) const {
+        pageID = _pageID;
+        slotID = _slotID;
+    }
 };
 
 

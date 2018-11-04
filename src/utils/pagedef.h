@@ -43,6 +43,11 @@
  */
 #define MAX_TB_NUM 31
 #define RELEASE 1
+/*
+ * 每一页中最多的记录数
+ */
+#define MAX_RECORD_PAGE 256
+#define RECORD_MAP 32
 typedef unsigned int* BufType;
 typedef unsigned int uint;
 typedef unsigned short ushort;
@@ -52,6 +57,4 @@ typedef long long ll;
 typedef double db;
 typedef int INT;
 typedef int(cf)(uchar*, uchar*);
-int current = 0;
-int tt = 0;
 #endif

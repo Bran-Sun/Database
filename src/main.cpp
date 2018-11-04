@@ -23,15 +23,18 @@
  * 不要自行进行类似的delete[] b操作，内存的申请和释放都在BufPageManager中做好
  * 如果自行进行类似free(b)或者delete[] b的操作，可能会导致严重错误
  */
-#include "bufmanager/BufPageManager.h"
+#include "recordmanager/RM_Manager.h"
 #include <iostream>
 
 using namespace std;
+
+unsigned char MyBitMap::h[61]; //defination
 
 int main() {
     MyBitMap::initConst();   //新加的初始化
     FileManager* fm = new FileManager();
     BufPageManager* bpm = new BufPageManager(fm);
+    /*
     fm->createFile("testfile.txt"); //新建文件
     fm->createFile("testfile2.txt");
     int fileID, f2;
@@ -68,5 +71,8 @@ int main() {
     bpm->close();
     //程序结束前可以调用BufPageManager的某个函数将缓存中的内容写回
     //具体的函数大家可以看看ppt或者程序的注释
+    */
+    RM_Manager rm_manager(fm, bpm);
+    rm_manager.createFile("testfile.txt", 100);
     return 0;
 }

@@ -29,7 +29,7 @@ using namespace std;
 #define RANGE 1
 #define ISNULL 2
 #define NOTHING 3
-int tmp = 0;
+#define TMP 0
 template<class Key>
 int keyu(uchar* a, uchar* b) {
 	Key c, d;
@@ -49,7 +49,7 @@ int su(uchar* a, uchar* b) {
 int sn(uchar* a, uchar* b) {
 	int res = strcmp((char*)a, (char*)b);
 	res = (res > 0) ? 1 : ((res < 0) ? -1 : 0);
-	return (res != 0) ? res : keyu<ll>(a + tmp, b + tmp);
+	return (res != 0) ? res : keyu<ll>(a + TMP, b + TMP);
 }
 cf* kcmp[3][2] = {
 	{&keyu<ll>, &keyn<ll>},

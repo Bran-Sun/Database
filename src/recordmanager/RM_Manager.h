@@ -6,20 +6,23 @@
 #define DATABASE_RM_MANAGER_H
 
 #include "../fileio/FileManager.h"
-#include  "../bufmanager/BufPageManager.h"
+#include "../bufmanager/BufPageManager.h"
+#include "RM_FileHandle.h"
+#include "../utils/pagedef.h"
+#include "PageHeaderFile.h"
 
 class RM_Manager
 {
 public:
-    RM_Manager(FileManager *fm, BufPageManager* bpm) {
-        this._fm = fm;
-        this._bpm = bpm;
+    RM_Manager(FileManager *fm, BufPageManager *bpm) {
+        _fm = fm;
+        _bpm = bpm;
     }
     
     int createFile(const char* filename, int recordSize);
     int destroyFile(const char* filename);
-    int openFile(const char* filename, RM_fileHandle* handle);
-    int closeFile(RM_FileHandle* handleFile);
+    int openFile(const char* filename, RM_FileHandle* handle);
+    int closeFile(RM_FileHandle *handleFile);
     
     ~RM_Manager() { }
     

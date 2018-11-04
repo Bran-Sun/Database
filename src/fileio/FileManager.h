@@ -34,6 +34,14 @@ private:
 		fd[fileID] = f;
 		return 0;
 	}
+    
+    int _destroyFile(const char* name) {
+        int f = remove(name);
+        if (f == -1) {
+            return -1;
+        }
+        return 0;
+    }
 public:
 	/*
 	 * FilManager构造函数
@@ -104,9 +112,23 @@ public:
 	 * 返回:操作成功，返回true
 	 */
 	bool createFile(const char* name) {
-		_createFile(name);
-		return true;
+		int f = _createFile(name);
+		return (f == 0);
 	}
+    
+    /*
+     * @函数名createFile
+     * @参数name:文件名
+     * 功能:新建name指定的文件名
+     * 返回:操作成功，返回true
+     */
+    bool destroyFile(const char* name) {
+        int f = _destroyFile(name);
+        return (f == 0);
+    }
+    
+ 
+ 
 	/*
 	 * @函数名openFile
 	 * @参数name:文件名
