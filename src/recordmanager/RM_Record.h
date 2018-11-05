@@ -13,13 +13,12 @@ class RM_Record
 {
 private:
     char *_data;
-    const RID *_rid;
     int _recordSize;
+    int _pageID, _slotID;
     
 public:
     RM_Record() {
         _data = nullptr;
-        _rid = nullptr;
         _recordSize = 0;
     }
     
@@ -28,7 +27,7 @@ public:
     }
     
     void getRid(RID &rid) const {
-        rid = *_rid;
+        rid.setRID(_pageID, _slotID);
     }
     
     void setData(const char *data, int recordSize, const RID *rid) {
@@ -39,11 +38,24 @@ public:
         _data = (char*)malloc(sizeof(char) * recordSize);
         memcpy(_data, data, (size_t)recordSize);
         _recordSize = recordSize;
-        _rid = rid;
+        rid->getRID(_pageID, _slotID);
     }
     
     void getRIDContent(int &pageID, int &slotID) const {
-        _rid->getRID(pageID, slotID);
+        pageID = _pageID;
+        slotID = _slotID;
+    }
+    
+    void setData(const char *data, int recordSize, const int pageID, const int slotID) {
+        if (_data != nullptr) {
+            free(_data);
+        }
+    
+        _data = (char*)malloc(sizeof(char) * recordSize);
+        memcpy(_data, data, (size_t)recordSize);
+        _recordSize = recordSize;
+        _pageID = pageID;
+        _slotID = slotID;
     }
 };
 

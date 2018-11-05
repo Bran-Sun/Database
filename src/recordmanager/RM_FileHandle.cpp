@@ -201,3 +201,66 @@ void RM_FileHandle::_setEmptySlot(BufType b, int slot)
     b[p] = b[p] | (1 << left);
 }
 
+int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset = 1) const
+{
+    if (!_isOpen) return -1;
+    
+    int pageID, slotID, index;
+    ridIn.getRID(pageID, slotID);
+    
+    if (pageID == 0 || pageID >= _pageNum || slotID >= _recordEachPage) return -1;  //页号和槽号不满足要求
+    BufType b = _bpm->getPage(_fileID, pageID, index);
+    
+    bool find = false;
+    
+    int p = (slotID + offset) >> 5;
+    int q = slotID + offset - (p << 5);
+    int count = slotID + offset;
+    while (count < _recordEachPage) {
+        if ((b[p] >> q) & 0x1) {
+            find = true;
+            break;
+        } else {
+            q++;
+            count++;
+            if (q == 32) {
+                q = 0;
+                p++;
+            }
+        }
+    }
+    
+    if (!find) {
+        pageID++;
+        while (pageID < _pageNum) {
+            BufType b = _bpm->getPage(_fileID, pageID, index);
+
+            p = 0;
+            q = 0;
+            count = 0;
+            while (count < _recordEachPage) {
+                if ((b[p] >> q) & 0x1) {
+                    find = true;
+                    break;
+                } else {
+                    q++;
+                    count++;
+                    if (q == 32) {
+                        q = 0;
+                        p++;
+                    }
+                }
+            }
+            if (find) break;
+        }
+    }
+    
+    if (!find) return -1;
+    charp start = (charp)b + count * _recordSize + RECORD_MAP;
+    record.setData(start, _recordSize, pageID, count);
+    ridIn.setRID(pageID, count);
+    return 0;
+}
+
+
+

@@ -40,6 +40,7 @@ public:
     }
     
     int getRecord(const RID &rid, RM_Record &record) const;
+    int getNextRecord(RID &ridIn, RM_Record &record, int offset = 1) const;
     int insertRecord(const char* data, RID &rid);
     int deleteRecord(RID &rid);
     int updateRecord(const RM_Record &record);

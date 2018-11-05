@@ -56,6 +56,23 @@ typedef char* charp;
 typedef unsigned long long ull;
 typedef long long ll;
 typedef double db;
-typedef int INT;
 typedef int(cf)(uchar*, uchar*);
+
+enum AttrType {
+    BOOL,
+    INT,
+    FLOAT,
+    STRING,
+    CHAR,
+};
+
+enum ComOp {
+    EQ_OP,
+    LT_OP,
+    GT_OP,
+    LE_OP,
+    GE_OP,
+    NE_OP,
+    NO_OP
+};
 #endif

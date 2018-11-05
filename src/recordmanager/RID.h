@@ -11,6 +11,11 @@ class RID
 private:
     int _pageID, _slotID;
 public:
+    RID() {
+        _pageID = 0;
+        _slotID = 0;
+    }
+    
     RID(int pageID, int slotID) {
         _pageID = pageID;
         _slotID = slotID;
