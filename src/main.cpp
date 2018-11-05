@@ -72,7 +72,24 @@ int main() {
     //程序结束前可以调用BufPageManager的某个函数将缓存中的内容写回
     //具体的函数大家可以看看ppt或者程序的注释
     */
-    RM_Manager rm_manager(fm, bpm);
-    rm_manager.createFile("testfile.txt", 100);
+    RM_Manager *rm_manager = new RM_Manager(fm, bpm);
+    rm_manager->createFile("testfile.txt", 100);
+    RM_FileHandle *handle = new RM_FileHandle();
+    rm_manager->openFile("testfile.txt", handle);
+    
+    std::vector<int> arr;
+    for (int i = 0; i < 10; i++)
+        arr.push_back(i);
+    char *data = (char*)arr.data();
+    RID rid(0, 0);
+    handle->insertRecord(data, rid);
+    
+    std::vector<int> sec;
+    for (int i = 0; i < 10; i++)
+        sec.push_back(i + 100);
+    handle->insertRecord((char*)sec.data(), rid);
+    rm_manager->closeFile(handle);
+    
+    
     return 0;
 }

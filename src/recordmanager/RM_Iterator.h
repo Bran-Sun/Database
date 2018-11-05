@@ -23,6 +23,12 @@ private:
 private:
     bool _satisfy(const RM_Record &record);
     
+    bool _compInt(char *data);
+    bool _compBool(char *data);
+    bool _compFloat(char *data);
+    bool _compString(char *data);
+    bool _compChar(char *data);
+    
 public:
     RM_Iterator() {
         _handle = nullptr;

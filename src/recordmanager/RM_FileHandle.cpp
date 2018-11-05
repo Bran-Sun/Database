@@ -41,6 +41,7 @@ int RM_FileHandle::insertRecord(const char *data, RID &rid)
         _isHeaderModify = true;
         
         b[0] = 1;
+        b[1] = 0xffffffff;
         rid.setRID(_pageNum - 1, 0);
         charp start = (charp)b + RECORD_MAP;
         memcpy(start, data, (size_t) _recordSize);
@@ -201,7 +202,7 @@ void RM_FileHandle::_setEmptySlot(BufType b, int slot)
     b[p] = b[p] | (1 << left);
 }
 
-int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset = 1) const
+int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset) const
 {
     if (!_isOpen) return -1;
     
