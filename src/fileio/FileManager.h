@@ -59,16 +59,16 @@ public:
 	 * 功能:将buf+off开始的2048个四字节整数(8kb信息)写入fileID和pageID指定的文件页中
 	 * 返回:成功操作返回0
 	 */
-	int writePage(int fileID, int pageID, BufType buf, int off) {
+	int writePage(int fileID, int pageID, BufType buf, int off, size_t pageSize = PAGE_SIZE) {
 		int f = fd[fileID];
 		off_t offset = pageID;
-		offset = (offset << PAGE_SIZE_IDX);
+        offset = (off_t) (offset * pageSize);
 		off_t error = lseek(f, offset, SEEK_SET);
 		if (error != offset) {
 			return -1;
 		}
 		BufType b = buf + off;
-		error = write(f, (void*) b, PAGE_SIZE);
+		error = write(f, (void*) b, pageSize);
 		return 0;
 	}
 	/*
@@ -80,17 +80,17 @@ public:
 	 * 功能:将fileID和pageID指定的文件页中2048个四字节整数(8kb)读入到buf+off开始的内存中
 	 * 返回:成功操作返回0
 	 */
-	int readPage(int fileID, int pageID, BufType buf, int off) {
+	int readPage(int fileID, int pageID, BufType buf, int off, size_t pageSize = PAGE_SIZE) {
 		//int f = fd[fID[type]];
 		int f = fd[fileID];
 		off_t offset = pageID;
-		offset = (offset << PAGE_SIZE_IDX);
+		offset = (off_t) (offset * pageSize);
 		off_t error = lseek(f, offset, SEEK_SET);
 		if (error != offset) {
 			return -1;
 		}
 		BufType b = buf + off;
-		error = read(f, (void*) b, PAGE_SIZE);
+		error = read(f, (void*) b, pageSize);
 		return 0;
 	}
 	/*

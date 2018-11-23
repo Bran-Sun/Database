@@ -22,21 +22,21 @@ public:
 	 * 缓存页面数组
 	 */
 	BufType* addr;
-	BufType allocMem() {
-		return new unsigned int[(PAGE_SIZE >> 2)];
+	BufType allocMem(size_t pageSize = PAGE_SIZE) {
+		return new unsigned int[(pageSize >> 2)];
 	}
-	BufType fetchPage(int typeID, int pageID, int& index) {
+	BufType fetchPage(int typeID, int pageID, int& index, size_t pageSize = PAGE_SIZE) {
 		BufType b;
 		index = replace->find();
 		b = addr[index];
 		if (b == NULL) {
-			b = allocMem();
+			b = allocMem(pageSize);
 			addr[index] = b;
 		} else {
 			if (dirty[index]) {
 				int k1, k2;
 				hash->getKeys(index, k1, k2);
-				fileManager->writePage(k1, k2, b, 0);
+				fileManager->writePage(k1, k2, b, 0, pageSize);
 				dirty[index] = false;
 			}
 		}
@@ -57,10 +57,10 @@ public:
 	 * 注意:在调用函数allocPage之前，调用者必须确信(fileID,pageID)指定的文件页面不存在缓存中
 	 *           如果确信指定的文件页面不在缓存中，那么就不用在hash表中进行查找，直接调用替换算法，节省时间
 	 */
-	BufType allocPage(int fileID, int pageID, int& index, bool ifRead = false) {
-		BufType b = fetchPage(fileID, pageID, index);
+	BufType allocPage(int fileID, int pageID, int& index, bool ifRead = false, size_t pageSize = PAGE_SIZE) {
+		BufType b = fetchPage(fileID, pageID, index, pageSize);
 		if (ifRead) {
-			fileManager->readPage(fileID, pageID, b, 0);
+			fileManager->readPage(fileID, pageID, b, 0, pageSize);
 		}
 		return b;
 	}
@@ -77,14 +77,14 @@ public:
 	 *           如果能找到，那么表示文件页面在缓存中
 	 *           如果没有找到，那么就利用替换算法获取一个页面
 	 */
-	BufType getPage(int fileID, int pageID, int& index) {
+	BufType getPage(int fileID, int pageID, int& index, size_t pageSize = PAGE_SIZE) {
 		index = hash->findIndex(fileID, pageID);
 		if (index != -1) {
 			access(index);
 			return addr[index];
 		} else {
-			BufType b = fetchPage(fileID, pageID, index);
-			fileManager->readPage(fileID, pageID, b, 0);
+			BufType b = fetchPage(fileID, pageID, index, pageSize);
+			fileManager->readPage(fileID, pageID, b, 0, pageSize);
 			return b;
 		}
 	}
@@ -125,11 +125,11 @@ public:
 	 * @参数index:缓存页面数组中的下标，用来表示一个缓存页面
 	 * 功能:将index代表的缓存页面归还给缓存管理器，在归还前，缓存页面中的数据需要根据脏页标记决定是否写到对应的文件页面中
 	 */
-	void writeBack(int index) {
+	void writeBack(int index, size_t pageSize = PAGE_SIZE) {
 		if (dirty[index]) {
 			int f, p;
 			hash->getKeys(index, f, p);
-			fileManager->writePage(f, p, addr[index], 0);
+			fileManager->writePage(f, p, addr[index], 0, pageSize);
 			dirty[index] = false;
 		}
 		replace->free(index);
