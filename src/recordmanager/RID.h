@@ -30,6 +30,10 @@ public:
         _pageID = pageID;
         _slotID = slotID;
     }
+    
+    bool equal(RID b) {
+        return _pageID == b._pageID && _slotID == b._slotID;
+    }
 };
 
 

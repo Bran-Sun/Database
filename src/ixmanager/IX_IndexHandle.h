@@ -37,14 +37,19 @@ public:
 private:
     void _forcePage(int index);
     std::shared_ptr<BpNode> _findKey(void *pData);
-    int _insert(std::shared_ptr<BpNode> node, int nodeIndex, void *pData, const RID &rid);
-    int _delete(std::shared_ptr<BpNode> node, int nodeIndex, const RID &rid);
+    int _insert(std::shared_ptr<BpNode> node, void *pData, const RID &rid);
+    int _delete(std::shared_ptr<BpNode> node, void *pData, const RID &rid);
+    int _insertKey(std::shared_ptr<BpNode> node, void *pData, const RID &rid);
+    int _insertInternalKey(std::shared_ptr<BpNode> parent, std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc);
+    int _getEmptyPage();
+    int _deleteKey(std::shared_ptr<BpNode> node);
     
 private:
     int _fileID;
     bool _open, _headerModify;
     BufPageManager *_bpm;
     int _pageNumber, _recordNumber, _rootPos, _maxKeyPerPage;
+    int _minKeyPerPage;
     AttrType _attrType;
     int _attrlength;
     std::list<int> _emptyPageList;

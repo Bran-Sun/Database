@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <string.h>
 /*
  * 一个页面中的字节数
  */
@@ -75,4 +76,6 @@ enum ComOp {
     NE_OP,
     NO_OP
 };
+
+int TypeComp(void *p1, void *p2, AttrType type, int attrlength);
 #endif

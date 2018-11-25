@@ -24,6 +24,8 @@
  * 如果自行进行类似free(b)或者delete[] b的操作，可能会导致严重错误
  */
 #include "recordmanager/RM_Manager.h"
+#include "ixmanager/IX_IndexHandle.h"
+#include "ixmanager/IX_Manager.h"
 #include <iostream>
 
 using namespace std;
@@ -72,6 +74,7 @@ int main() {
     //程序结束前可以调用BufPageManager的某个函数将缓存中的内容写回
     //具体的函数大家可以看看ppt或者程序的注释
     */
+    /*
     RM_Manager *rm_manager = new RM_Manager(fm, bpm);
     rm_manager->createFile("testfile.txt", 100);
     RM_FileHandle *handle = new RM_FileHandle();
@@ -89,7 +92,25 @@ int main() {
         sec.push_back(i + 100);
     handle->insertRecord((char*)sec.data(), rid);
     rm_manager->closeFile(handle);
+    */
+    IX_Manager *manager = new IX_Manager(fm, bpm);
+    manager->createIndex("test0", 0, INT, 4);
     
+    IX_IndexHandle handle;
+    manager->openIndex("test0", 0, handle);
+    
+    int number = 60;
+    int begin = 30;
+    int *array = new int[number];
+    for (int i = 0; i < number; i++)
+        array[i] = i + begin;
+    for (int i = 0; i < number; i++)
+        handle.insertEntry((void*)(array + i), RID(i + begin, i + begin));
+    
+    int *p = new int;
+    *p = 60;
+    handle.deleteEntry((void*)p, RID(60, 60));
+    manager->closeIndex(handle);
     
     return 0;
 }

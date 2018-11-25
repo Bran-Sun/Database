@@ -10,7 +10,7 @@ int IX_Manager::createIndex(const char *filename, int indexNo, AttrType attrtype
 {
     std::stringstream newName;
     newName << filename << "." << indexNo;
-    int maxKeyPerPage = (IX_PAGE_SIZE - attrLength - 4 * 4) / (4 + attrLength);
+    int maxKeyPerPage = (IX_PAGE_SIZE - attrLength - 4 * 4) / (12 + attrLength);
     if (maxKeyPerPage == 0) {
         printf("IX_Manager: attrlength is too large!\n");
         return -1;
@@ -93,7 +93,7 @@ int IX_Manager::openIndex(const char *filename, int indexNo, IX_IndexHandle &han
     //load header page
     int pageID = 0;
     int index = 0;
-    BufType bt = _bpm->allocPage(fileID, pageID, index, true);
+    BufType bt = _bpm->allocPage(fileID, pageID, index, true, IX_PAGE_SIZE);
     handle.init((IX_HeaderPage*)bt, _bpm);
     _bpm->release(index);
     
@@ -110,11 +110,11 @@ int IX_Manager::closeIndex(IX_IndexHandle &handle)
     if (handle.isHeaderModify()) {
         int index;
         int pageID = 0;
-        BufType b = _bpm->allocPage(handle.getFileID(),  pageID, index, false);
+        BufType b = _bpm->getPage(handle.getFileID(),  pageID, index, IX_PAGE_SIZE);
         IX_HeaderPage *header = (IX_HeaderPage*)b;
         handle.setHeaderPage(header);
         _bpm->markDirty(index);
-        _bpm->writeBack(index);
+        _bpm->writeBack(index, IX_PAGE_SIZE);
     }
     handle.forcePages();
     
