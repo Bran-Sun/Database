@@ -323,3 +323,34 @@ int IX_IndexHandle::_deleteKey(std::shared_ptr<BpNode> node)
     return 0;
 }
 
+std::shared_ptr<BpNode> IX_IndexHandle::getLeftNode() const
+{
+    std::shared_ptr<BpNode> cur = _root;
+    while (!cur->isTerminal()) {
+        int nextPageID = cur->getChild(-1);
+        int pageIndex;
+        BufType b = _bpm->getPage(_fileID, nextPageID, pageIndex, IX_PAGE_SIZE);
+        std::shared_ptr<BpNode> nextNode = std::make_shared<BpNode>(BpNode(cur, nextPageID, b, _attrlength, false));
+        cur = nextNode;
+    }
+    return cur;
+}
+
+int IX_IndexHandle::getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const
+{
+    nodeIndex++;
+    while (nodeIndex >= node->getKeyNum()) {
+        int nextPageID = node->getNextPage();
+        if (nextPageID == 0) return -1;
+        int pageIndex;
+        BufType b = _bpm->getPage(_fileID, nextPageID, pageIndex, IX_PAGE_SIZE);
+        std::shared_ptr<BpNode> nextNode = std::make_shared<BpNode>(BpNode(nullptr, nextPageID, b, _attrlength, false));
+        nodeIndex = 0;
+        node = nextNode;
+    }
+    
+    key = node->_keys[nodeIndex];
+    rid = node->_rids[nodeIndex];
+    return 0;
+}
+

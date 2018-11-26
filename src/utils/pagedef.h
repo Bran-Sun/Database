@@ -78,4 +78,5 @@ enum ComOp {
 };
 
 int TypeComp(void *p1, void *p2, AttrType type, int attrlength);
+bool TypeCompWithComOp(void *p1, void *p2, AttrType attrType, ComOp op, int attrlength);
 #endif

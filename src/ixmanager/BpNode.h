@@ -12,6 +12,7 @@
 class BpNode
 {
 public:
+    friend class IX_IndexHandle;
     BpNode() { _pageID = 0; _terminal = false; _leaf = false; _root = false; }
     BpNode(int pageID, BufType bt, int attrlength, bool root = false);
     BpNode(bool root, bool terminal, int pageID) : _root(root), _terminal(terminal), _pageID(pageID) { _prePage = 0; _nextPage = 0;}
@@ -27,6 +28,7 @@ public:
     
     int getChild(int index) { return _pageIndex[index + 1]; }
     int getPrePage() const { return _prePage; }
+    int getNextPage() const { return _nextPage; }
     int getKeyNum() const { return (int)_keys.size(); }
     int compKey(void *pData, AttrType type, int attrlength, int index);
     RID getRID(int index) const { return _rids[index]; }
@@ -39,6 +41,8 @@ public:
     void initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode>rc, int attrlength);
     void insertInternalKey(std::shared_ptr<BpNode> node, int attrlength);
     void deleteKey();
+    
+    ~BpNode();
     
 private:
     void _load(BufType bt, int attrlength);

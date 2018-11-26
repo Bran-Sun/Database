@@ -217,4 +217,11 @@ void BpNode::deleteKey()
     }
 }
 
+BpNode::~BpNode()
+{
+    for (auto key : _keys) {
+        delete[] (char*)key;
+    }
+}
+
 

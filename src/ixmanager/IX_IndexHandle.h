@@ -33,6 +33,10 @@ public:
     int insertEntry(void *pData, const RID &rid);
     int deleteEntry(void *pData, const RID &rid);
     int forcePages();
+    AttrType getAttrType() const { return _attrType; }
+    int getAttrlength() const { return _attrlength; }
+    std::shared_ptr<BpNode> getLeftNode() const;
+    int getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
     
 private:
     void _forcePage(int index);
