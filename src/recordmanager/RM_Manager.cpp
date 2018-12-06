@@ -3,6 +3,7 @@
 //
 
 #include "RM_Manager.h"
+#include <sstream>
 
 /*
  * @函数名createFile
@@ -20,15 +21,17 @@ int RM_Manager::createFile(const char *filename, int recordSize)
         return -1;
     } //记录大小必须小于页的大小
     
+    std::stringstream newName;
+    newName << filename << ".data" ;
+    
     int fileID;
-    _fm->createFile(filename);
-    bool suc = _fm->openFile(filename, fileID);
+    _fm->createFile(newName.str().c_str());
+    bool suc = _fm->openFile(newName.str().c_str(), fileID);
     if (!suc) return -1;
     
     printf("creating record file %s succeed!\n", filename);
     
     //初始化第一页
-    _fm->openFile(filename, fileID);
     int pageID = 0;
     int index;
     BufType bt = _bpm->allocPage(fileID, pageID, index, false);
@@ -46,15 +49,20 @@ int RM_Manager::createFile(const char *filename, int recordSize)
 
 int RM_Manager::destroyFile(const char *filename)
 {
-    int suc = _fm->destroyFile(filename);
+    std::stringstream newName;
+    newName << filename << ".data" ;
+    int suc = _fm->destroyFile(newName.str().c_str());
     return suc;
 }
 
 int RM_Manager::openFile(const char* filename, RM_FileHandle* handle)
 {
+    std::stringstream newName;
+    newName << filename << ".data" ;
+    
     if (handle->isOpen()) return 0;
     int fileID;
-    bool suc = _fm->openFile(filename, fileID);
+    bool suc = _fm->openFile(newName.str().c_str(), fileID);
     if (!suc) return -1;
     
     handle->setFileID(fileID);

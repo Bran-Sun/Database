@@ -35,10 +35,19 @@
 #define DEBUG_DELETE 0
 #define DEBUG_ERASE 1
 #define DEBUG_NEXT 1
+
+
+
 /*
  * 一个表中列的上限
  */
 #define MAX_COL_NUM 31
+
+/*
+ * 表的名字上限
+ */
+#define TABLE_NAME_MAX_LENGTH 255
+
 /*
  * 数据库中表的个数上限
  */

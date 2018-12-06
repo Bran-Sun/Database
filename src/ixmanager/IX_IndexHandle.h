@@ -37,7 +37,7 @@ public:
     int getAttrlength() const { return _attrlength; }
     std::shared_ptr<BpNode> getLeftNode() const;
     int getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
-    
+
 private:
     void _forcePage(int index);
     std::shared_ptr<BpNode> _findKey(void *pData);
@@ -47,7 +47,7 @@ private:
     int _insertInternalKey(std::shared_ptr<BpNode> parent, std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc);
     int _getEmptyPage();
     int _deleteKey(std::shared_ptr<BpNode> node);
-    
+
 private:
     int _fileID;
     bool _open, _headerModify;

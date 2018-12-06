@@ -9,30 +9,39 @@
 BpNode::BpNode(int pageID, BufType bt, int attrlength, bool root)
 {
     _pageID = pageID;
-    _load(bt, attrlength);
-
+    _root = root;
+    _lightLoad(bt, attrlength);
 }
 
 int BpNode::findIndex(void *pData, int &index, AttrType attrType, int attrlength)
 {
-    
-    if (_keys.size() == 0)
+    //printf("data: %d\n", *(int*)pData);
+    //printf("pageID: %d\n", _pageID);
+    if (_keyNum == 0)
     {
         index = -1;
         _hop = 0;
         return -1;
     }
     
-    if (TypeComp(pData, _keys[0], attrType, attrlength) < 0) {
+    char *keys = nullptr;
+    if (_terminal)
+    {
+        keys = (char *) (_buf + IX_NODE_H + _keyNum * 2);
+    } else {
+        keys = (char *) (_buf + IX_NODE_H + _keyNum + 1);
+    }
+    
+    if (TypeComp(pData, (void*)keys, attrType, attrlength) < 0) {
         index = -1;
         _hop = 0;
         return -1;
     }
     
-    int begin = 0, end = _keys.size();
+    int begin = 0, end = _keyNum;
     while (begin < end - 1) {
         int mid = (begin + end) / 2;
-        if (TypeComp(pData, _keys[mid], attrType, attrlength) < 0) {
+        if (TypeComp(pData, keys + attrlength * mid, attrType, attrlength) < 0) {
             end = mid;
         } else {
             begin = mid;
@@ -41,7 +50,7 @@ int BpNode::findIndex(void *pData, int &index, AttrType attrType, int attrlength
     _hop = begin + 1;
     index = begin;
     
-    if (TypeComp(pData, _keys[begin], attrType, attrlength) == 0) {
+    if (TypeComp(pData, keys + attrlength * begin, attrType, attrlength) == 0) {
         return 0;
     }
     
@@ -54,16 +63,25 @@ BpNode::BpNode(std::shared_ptr<BpNode> parent, int pageID, BufType bt, int attrl
     _root = root;
     _pageID = pageID;
     
-    _load(bt, attrlength);
+    _lightLoad(bt, attrlength);
 }
 
 int BpNode::compKey(void *pData, AttrType type, int attrlength, int index)
 {
-    return TypeComp(pData, _keys[index], type, attrlength);
+    if  (_terminal) {
+        return TypeComp(pData, (char*)(_buf + IX_NODE_H + _keyNum * 2) + attrlength * index, type, attrlength);
+    } else {
+        return TypeComp(pData, (char*)(_buf + IX_NODE_H + _keyNum + 1) + attrlength * index, type, attrlength);
+    }
 }
 
 void BpNode::insertTerminalKV(void *pData, int attrlength, const RID &rid)
 {
+    if (_keys.size() == 0)
+    {
+        _load(_buf, attrlength);
+    }
+    _keyNum++;
     char *data = new char[attrlength];
     memcpy(data, (char*)pData, (size_t) attrlength);
     _keys.insert(_keys.begin() + _hop, (void*)data);
@@ -84,6 +102,7 @@ std::shared_ptr<BpNode> BpNode::split(int pageID)
     
     int size = _keys.size();
     int mid = size / 2;
+    _keyNum = mid;
     for (int i = mid; i < size; i++) {
         node->_keys.push_back(_keys[i]);
     }
@@ -171,7 +190,7 @@ void BpNode::write(BufType bt, int attrlength)
             bt[IX_NODE_H + i * 2] = p;
             bt[IX_NODE_H + i * 2 + 1] = s;
         }
-    
+        
         char *p = (char *) bt + _keys.size() * 8 + IX_NODE_H * 4;
         for (int i = 0; i < _keys.size(); i++) {
             memcpy(p, (char*)_keys[i], attrlength);
@@ -196,6 +215,7 @@ void BpNode::initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc, 
 {
     char *tem = new char[attrlength];
     memcpy(tem, (char*)rc->_keys[0], attrlength);
+    _keyNum++;
     _keys.push_back((void *) tem);
     _pageIndex.push_back(lc->_pageID);
     _pageIndex.push_back(rc->_pageID);
@@ -203,7 +223,12 @@ void BpNode::initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc, 
 
 void BpNode::insertInternalKey(std::shared_ptr<BpNode> rc, int attrlength)
 {
-    char *tem = new char[attrlength];
+    if (_keys.size() == 0)
+    {
+        _load(_buf, attrlength);
+    }
+    _keyNum++;
+    std::string tem = new char[attrlength];
     memcpy(tem, (char*)rc->_keys[0], attrlength);
     _keys.insert(_keys.begin() + _hop, (void*)tem);
     _pageIndex.insert(_pageIndex.begin() + _hop + 1, rc->getPageID());
@@ -217,6 +242,7 @@ void BpNode::deleteKey()
     }
 }
 
+
 BpNode::~BpNode()
 {
     /*for (auto key : _keys) {
@@ -224,4 +250,19 @@ BpNode::~BpNode()
     }*/
 }
 
-
+void BpNode::_lightLoad(BufType bt, int attrlength)
+{
+    if (bt[0] == 0) _terminal = false;
+    else _terminal = true;
+    
+    if (_terminal) {
+        _prePage = bt[1];
+        _nextPage = bt[2];
+    }
+    else {
+        _prePage = 0;
+        _nextPage = 0;
+    }
+    _keyNum = bt[3];
+    _buf = bt;
+}

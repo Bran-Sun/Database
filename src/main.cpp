@@ -98,19 +98,24 @@ int main() {
     
     IX_IndexHandle handle;
     manager->openIndex("test0", 0, handle);
+    clock_t start, end;
     
-    int number = 60;
-    int begin = 30;
+    start = clock();
+    
+    int number = 1000000;
+    int begin = 1;
     int *array = new int[number];
     for (int i = 0; i < number; i++)
         array[i] = i + begin;
     for (int i = 0; i < number; i++)
         handle.insertEntry((void*)(array + i), RID(i + begin, i + begin));
     
-    int *p = new int;
-    *p = 60;
-    handle.deleteEntry((void*)p, RID(60, 60));
+//    int *p = new int;
+//    *p = 60;
+//    handle.deleteEntry((void*)p, RID(60, 60));
     manager->closeIndex(handle);
     
+    end = clock();
+    cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
     return 0;
 }

@@ -9,13 +9,15 @@
 #include "../utils/pagedef.h"
 #include "../recordmanager/RID.h"
 
+#define IX_NODE_H 4
+
 class BpNode
 {
 public:
     friend class IX_IndexHandle;
     BpNode() { _pageID = 0; _terminal = false; _leaf = false; _root = false; }
     BpNode(int pageID, BufType bt, int attrlength, bool root = false);
-    BpNode(bool root, bool terminal, int pageID) : _root(root), _terminal(terminal), _pageID(pageID) { _prePage = 0; _nextPage = 0;}
+    BpNode(bool root, bool terminal, int pageID, BufType bt) : _root(root), _terminal(terminal), _pageID(pageID), _buf(bt) { _prePage = 0; _nextPage = 0; _keyNum = 0;}
     BpNode(std::shared_ptr<BpNode> parent, int pageID, BufType bt, int attrlength, bool root = false);
     
     bool isTerminal() const { return _terminal; }
@@ -26,12 +28,12 @@ public:
     void setTerminal(bool terminal) { _terminal = terminal; }
     void setLeaf(bool leaf) { _leaf = leaf; }
     
-    int getChild(int index) { return _pageIndex[index + 1]; }
+    int getChild(int index) { return _buf[IX_NODE_H + index + 1]; }
     int getPrePage() const { return _prePage; }
     int getNextPage() const { return _nextPage; }
-    int getKeyNum() const { return (int)_keys.size(); }
+    int getKeyNum() const { return _keyNum; }
     int compKey(void *pData, AttrType type, int attrlength, int index);
-    RID getRID(int index) const { return _rids[index]; }
+    RID getRID(int index) const { return RID(_buf[IX_NODE_H + index * 2], _buf[IX_NODE_H + index * 2 + 1]); }
     void insertTerminalKV(void* pData, int attrlength, const RID &rid);
     std::shared_ptr<BpNode> split(int pageID);
     void write(BufType bt, int attrlength);
@@ -43,14 +45,16 @@ public:
     void deleteKey();
     
     ~BpNode();
-    
+
 private:
     void _load(BufType bt, int attrlength);
-    
+    void _lightLoad(BufType bt, int attrlength);
+
 private:
-    int _pageID, _nextPage, _prePage; //only is terminal then have nextPage
+    int _pageID, _nextPage, _prePage, _keyNum; //only is terminal then have nextPage
     bool _terminal, _leaf, _root;
     int _hop; //record formal search
+    BufType _buf;
     std::vector<void*> _keys;
     std::vector<int> _pageIndex;
     std::vector<std::shared_ptr<BpNode>> _pagePointer;

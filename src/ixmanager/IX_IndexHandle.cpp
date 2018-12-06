@@ -74,14 +74,15 @@ void IX_IndexHandle::init(IX_HeaderPage *header, BufPageManager *bpm)
         _modifyIndex.insert(index);
         _rootPos = pageID;
         _pageNumber ++;
+        _headerModify = true;
     } else {
         int index;
         bt = _bpm->allocPage(_fileID, _rootPos, index, true, IX_PAGE_SIZE);
+        _headerModify = false;
     }
     _root = std::make_shared<BpNode>(BpNode(_rootPos, bt, _attrlength, true));
     
     _open = true;
-    _headerModify = false;
     _bpm = bpm;
 }
 
@@ -223,7 +224,6 @@ std::shared_ptr<BpNode> IX_IndexHandle::_findKey(void *pData)
 
 int IX_IndexHandle::_insertKey(std::shared_ptr<BpNode> node, void *pData, const RID &rid)
 {
-    
     node->insertTerminalKV(pData, _attrlength, rid);
     
     if (node->getKeyNum() > _maxKeyPerPage) {
@@ -259,15 +259,15 @@ int IX_IndexHandle::_insertInternalKey(std::shared_ptr<BpNode> parent, std::shar
 {
     if (parent == nullptr) { //root
         int pageID = _getEmptyPage();
-        parent = std::make_shared<BpNode>(BpNode(true, false, pageID));
+        int index;
+        BufType bt = _bpm->getPage(_fileID, pageID, index, IX_PAGE_SIZE);
+        parent = std::make_shared<BpNode>(BpNode(true, false, pageID, bt));
         _root = parent;
         _rootPos = pageID;
         //insert Key and lc, rc
         lc->setParent(parent);
         rc->setParent(parent);
         parent->initInsert(lc, rc, _attrlength);
-        int index;
-        BufType bt = _bpm->getPage(_fileID, pageID, index, IX_PAGE_SIZE);
         parent->write(bt, _attrlength);
         _bpm->markDirty(index);
         _modifyIndex.insert(index);
@@ -282,7 +282,7 @@ int IX_IndexHandle::_insertInternalKey(std::shared_ptr<BpNode> parent, std::shar
             parent->write(bt, _attrlength);
             _bpm->markDirty(index);
             _modifyIndex.insert(index);
-    
+            
             bt = _bpm->getPage(_fileID, newPageID, index, IX_PAGE_SIZE);
             newNode->write(bt, _attrlength);
             _bpm->markDirty(index);
@@ -353,4 +353,3 @@ int IX_IndexHandle::getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, v
     rid = node->_rids[nodeIndex];
     return 0;
 }
-

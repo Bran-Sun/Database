@@ -9,7 +9,6 @@
 
 #define IX_PAGE_SIZE 512
 #define RID_PER_BUCKET 32 //每个桶的rid最多数目
-#define IX_NODE_H 4
 
 struct IX_HeaderPage
 {
