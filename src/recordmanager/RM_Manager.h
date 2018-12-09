@@ -10,25 +10,26 @@
 #include "RM_FileHandle.h"
 #include "../utils/pagedef.h"
 #include "PageHeaderFile.h"
+#include "../smmanager/parser.h"
 
 class RM_Manager
 {
 public:
-    RM_Manager(FileManager *fm, BufPageManager *bpm) {
+    RM_Manager(std::shared_ptr<FileManager> fm, std::shared_ptr<BufPageManager> bpm) {
         _fm = fm;
         _bpm = bpm;
     }
     
-    int createFile(const char* filename, int recordSize);
-    int destroyFile(const char* filename);
-    int openFile(const char* filename, RM_FileHandle* handle);
-    int closeFile(RM_FileHandle *handleFile);
+    int createFile(std::string &filename, std::vector<AttrInfo> attributes);
+    int destroyFile(std::string &filename);
+    int openFile(std::string &filename, RM_FileHandle &handle);
+    int closeFile(RM_FileHandle &handleFile);
     
     ~RM_Manager() { }
     
 private:
-    FileManager *_fm;
-    BufPageManager *_bpm;
+    std::shared_ptr<FileManager> _fm;
+    std::shared_ptr<BufPageManager> _bpm;
 };
 
 

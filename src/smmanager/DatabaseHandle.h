@@ -13,6 +13,8 @@
 #include "../utils/pagedef.h"
 #include "../bufmanager/BufPageManager.h"
 #include "../fileio/FileManager.h"
+#include "../recordmanager/RM_Manager.h"
+#include "../ixmanager/IX_Manager.h"
 #include "TableHandle.h"
 
 struct DBHeadPage
@@ -28,14 +30,14 @@ class DatabaseHandle
 public:
     DatabaseHandle();
     
-    int open(std::string &filename, std::shared_ptr<FileManager> fm, std::shared_ptr<BufPageManager> bpm);
+    int open(const std::string &filename, std::shared_ptr<FileManager> fm, std::shared_ptr<BufPageManager> bpm);
     int createTable(const std::string &relName, std::vector<AttrInfo> attributes);
     int dropTable(const std::string &relName);
     
     int createIndex(std::string &relName, std::string &attrName);
     int dropIndex(std::string &relName, std::string &attrName);
     
-    int load(std::string &relName, std::string &filename);
+    //int load(std::string &relName, std::string &filename);
     
     int close();
     
@@ -48,9 +50,11 @@ private:
     bool _modifyDbf;
     std::shared_ptr<FileManager> _fm;
     std::shared_ptr<BufPageManager> _bpm;
+    std::shared_ptr<RM_Manager> _rm;
+    std::shared_ptr<IX_Manager> _ix;
     std::set<std::string> _tableNames;
     std::string _dbName;
-    std::map<std::string, std::unique_ptr<TableHandle>> _tableHandles;
+    std::map<std::string, TableHandle> _tableHandles;
     int _fileID; //id for dbf file
     bool _open;
 };

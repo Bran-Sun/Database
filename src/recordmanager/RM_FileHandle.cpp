@@ -14,11 +14,11 @@ int RM_FileHandle::getRecord(const RID &rid, RM_Record &record) const
     BufType b = _bpm->getPage(_fileID, pageID, index);
     
     int p = slotID >> 5;
-    int flag = b[p] >> (slotID - (p << 5));
+    int flag = b[RM_HEADER_LEN + p] >> (slotID - (p << 5));
     if (!(flag & 0x1)) return -1;   //记录不存在
     
     charp start = (charp)b;
-    start = start + RECORD_MAP + slotID * _recordSize;
+    start = start + RM_HEADER_LEN * 4  + RECORD_MAP + slotID * _recordSize;
     
     record.setData(start, _recordSize, &rid);
     
@@ -29,48 +29,47 @@ int RM_FileHandle::insertRecord(const char *data, RID &rid)
 {
     if (!_isOpen) return -1;
     
-    if (_emptyPageList.size() == 0) {
+    if (_emptyPageHead == 0) {
         int index;
         BufType b = _bpm->allocPage(_fileID, _pageNum, index, false);
-        for (int i = 0; i < RECORD_MAP / 4; i++) {
-            b[i] = 0;
-        }
-        _emptyPageList.push_back(_pageNum);
-        _emptyPageSet.insert(_pageNum);
+        _emptyPageHead = _pageNum;
         _pageNum++;
         _isHeaderModify = true;
         
-        b[0] = 1;
-        b[1] = 0xffffffff;
+        b[0] = 0;
+        b[1] = 1;
+        for (int i = 2; i < 9; i++)
+            b[i] = 0;
         rid.setRID(_pageNum - 1, 0);
-        charp start = (charp)b + RECORD_MAP;
+        charp start = (charp)b + RM_HEADER_LEN * 4 + RECORD_MAP;
         memcpy(start, data, (size_t) _recordSize);
         
         _bpm->markDirty(index);
         _modifyIndex.insert(index);
     } else {
-        int pageID = _emptyPageList.front();
+        int pageID = _emptyPageHead;
         int index;
         BufType b = _bpm->getPage(_fileID, pageID, index);
-        int slot = _getEmptySlot(b);
-        _setEmptySlot(b, slot);
+        int slot = _getEmptySlot(b + 1);
+        _setEmptySlot(b + 1, slot);
         
         rid.setRID(pageID, slot);
         charp start = (charp)b;
-        start = start + RECORD_MAP + slot * _recordSize;
+        start = start + RM_HEADER_LEN * 4 + RECORD_MAP + slot * _recordSize;
         memcpy(start, data, _recordSize);
         _bpm->markDirty(index);
         _modifyIndex.insert(index);
         
         int slotCheck = _getEmptySlot(b);
-        if (slotCheck == _recordSize) {
-            _emptyPageList.pop_front();
-            _emptyPageSet.erase(pageID);
+        if (slotCheck == _recordEachPage) {
+            if (b[0] != 0) {
+                _emptyPageHead = b[0];
+                b[0] = 0;
+            } else {
+                _emptyPageHead = 0;
+            }
+            _isHeaderModify = true;
         }
-        _isHeaderModify = true;
-        
-        _bpm->markDirty(index);
-        _modifyIndex.insert(index);
     }
     return 0;
 }
@@ -84,15 +83,17 @@ int RM_FileHandle::deleteRecord(RID &rid)
     
     BufType b = _bpm->getPage(_fileID, pageID, index);
     int p = slotID >> 5;
-    int flag = b[p] >> (slotID - (p << 5));
-    if (!(flag & 0x1)) return 0;   //记录不存在
+    int flag = b[p + RM_HEADER_LEN] >> (slotID - (p << 5));
+    if (!(flag & 0x1)) {
+        printf("rm_handle: record not exist!\n");
+        return 1;   //记录不存在
+    }
     else {
         //判断原先表是否为满
-        bool originFull = _checkOriginEmpty(pageID);
-        b[p] = b[p] ^ (1 << (slotID - (p << 5)));
-        if (originFull) {
-            _emptyPageList.push_front(pageID);
-            _emptyPageSet.insert(pageID);
+        b[p + RM_HEADER_LEN] = b[p + RM_HEADER_LEN] ^ (1 << (slotID - (p << 5)));
+        if (b[EMPTYNEXT] == 0) {
+            b[EMPTYNEXT] = _emptyPageHead;
+            _emptyPageHead = pageID;
             _isHeaderModify = true;
         }
         
@@ -111,10 +112,13 @@ int RM_FileHandle::updateRecord(const RM_Record &record)
     
     BufType b = _bpm->getPage(_fileID, pageID, index);
     int p = slotID >> 5;
-    int flag = b[p] >> (slotID - (p << 5));
-    if (!(flag & 0x1)) return 0;   //记录不存在
+    int flag = b[RM_HEADER_LEN + p] >> (slotID - (p << 5));
+    if (!(flag & 0x1)) {
+        printf("rm_handle: record not exist!\n");
+        return 0;   //记录不存在
+    }
     
-    charp start = (charp)b + RECORD_MAP + slotID * _recordSize;
+    charp start = (charp)b + RM_HEADER_LEN * 4 + RECORD_MAP + slotID * _recordSize;
     charp newData;
     record.getData(newData);
     memcpy(start, newData, _recordSize);
@@ -138,22 +142,20 @@ void RM_FileHandle::_forcePage(int index) {
     if (fileID == _fileID) _bpm->writeBack(index);
 }
 
-void RM_FileHandle::init(PageHeaderFile *header, BufPageManager *bpm)
+void RM_FileHandle::init(PageHeaderFile *header, std::shared_ptr<BufPageManager> bpm)
 {
     _modifyIndex.clear();
-    _emptyPageList.clear();
-    _emptyPageSet.clear();
     
     _recordSize = header->recordSize;
     _recordEachPage = header->recordEachPage;
     _pageNum = header->pageNumber;
-    for (int i = 0; i < (PAGE_SIZE / 4 - 3); i++) {
-        if (header->emptyPageList[i] > 0) {
-            _emptyPageList.push_back(header->emptyPageList[i]);
-            _emptyPageSet.insert(header->emptyPageList[i]);
-        }
-        else break;
+    _emptyPageHead = header->emptyPageHead;
+    
+    int attrNum = header->attrNumber;
+    for (int i = 0; i < attrNum; i++) {
+        _attributions.emplace_back(header->attributions[i]);
     }
+    
     _isOpen = true;
     _isHeaderModify = false;
     _bpm = bpm;
@@ -163,7 +165,7 @@ int RM_FileHandle::_getEmptySlot(BufType b)
 {
     int count = 0;
     int i = 0, j = 0;
-    while (count < _recordSize) {
+    while (count < _recordEachPage) {
         if (!((b[i] >> j) & 0x1)) break;
         
         j++;
@@ -176,23 +178,16 @@ int RM_FileHandle::_getEmptySlot(BufType b)
     return count;
 }
 
-bool RM_FileHandle::_checkOriginEmpty(int pageID)
-{
-    return (_emptyPageSet.find(pageID) != _emptyPageSet.end());
-}
-
 void RM_FileHandle::setHeaderPage(PageHeaderFile *header)
 {
     header->recordSize = _recordSize;
     header->recordEachPage = _recordEachPage;
     header->pageNumber = _pageNum;
+    header->emptyPageHead = _emptyPageHead;
     
-    int count = 0;
-    for (auto i : _emptyPageList) {
-        header->emptyPageList[count] = i;
-        count++;
+    for (int i = 0; i < _attributions.size(); i++) {
+        header->attributions[i].isIndex = _attributions[i].isIndex;
     }
-    header->emptyPageList[count] = 0;
 }
 
 void RM_FileHandle::_setEmptySlot(BufType b, int slot)
@@ -218,7 +213,7 @@ int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset) cons
     int q = slotID + offset - (p << 5);
     int count = slotID + offset;
     while (count < _recordEachPage) {
-        if ((b[p] >> q) & 0x1) {
+        if ((b[p + RM_HEADER_LEN] >> q) & 0x1) {
             find = true;
             break;
         } else {
@@ -240,7 +235,7 @@ int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset) cons
             q = 0;
             count = 0;
             while (count < _recordEachPage) {
-                if ((b[p] >> q) & 0x1) {
+                if ((b[RM_HEADER_LEN + p] >> q) & 0x1) {
                     find = true;
                     break;
                 } else {
@@ -253,11 +248,12 @@ int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset) cons
                 }
             }
             if (find) break;
+            pageID++;
         }
     }
     
     if (!find) return -1;
-    charp start = (charp)b + count * _recordSize + RECORD_MAP;
+    charp start = (charp)b + RM_HEADER_LEN * 4 + count * _recordSize + RECORD_MAP;
     record.setData(start, _recordSize, pageID, count);
     ridIn.setRID(pageID, count);
     return 0;

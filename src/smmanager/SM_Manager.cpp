@@ -8,8 +8,8 @@
 
 SM_Manager::SM_Manager()
 {
-    _fm = std::make_shared<FileManager>(new FileManager());
-    _bpm = std::make_shared<BufPageManager>(new BufPageManager(_fm));
+    _fm = std::make_shared<FileManager>(FileManager());
+    _bpm = std::make_shared<BufPageManager>(BufPageManager(_fm));
     _open = false;
     _initDbManager();
 }
@@ -53,7 +53,7 @@ int SM_Manager::openDb(const std::string &filename, DatabaseHandle &handle)
 
     int result = handle.open(filename, _fm, _bpm);
     if (result == -1) {
-        printf("sm_error: database cannot open!\n")
+        printf("sm_error: database cannot open!\n");
         return -1;
     }
     

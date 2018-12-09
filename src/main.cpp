@@ -34,8 +34,8 @@ unsigned char MyBitMap::h[61]; //defination
 
 int main() {
     MyBitMap::initConst();   //新加的初始化
-    FileManager* fm = new FileManager();
-    BufPageManager* bpm = new BufPageManager(fm);
+    std::shared_ptr<FileManager> fm = std::make_shared<FileManager>(FileManager());
+    std::shared_ptr<BufPageManager> bpm = std::make_shared<BufPageManager>(BufPageManager(fm));
     /*
     fm->createFile("testfile.txt"); //新建文件
     fm->createFile("testfile2.txt");
@@ -93,7 +93,7 @@ int main() {
     handle->insertRecord((char*)sec.data(), rid);
     rm_manager->closeFile(handle);
     */
-    IX_Manager *manager = new IX_Manager(fm, bpm);
+    std::shared_ptr<IX_Manager> manager = std::make_shared<IX_Manager>(IX_Manager(fm, bpm));
     manager->createIndex("test0", 0, INT, 4);
     
     IX_IndexHandle handle;

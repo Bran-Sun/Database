@@ -7,13 +7,22 @@
 
 #include "../utils/pagedef.h"
 
+struct AttrInfoRead
+{
+    char attrName[256];
+    int attrLength;
+    AttrType attrType;
+    bool isNull, isIndex;
+};
+
 struct PageHeaderFile
 {
     int recordSize; //4byte
     int recordEachPage;
     int pageNumber;
-    
-    int emptyPageList[PAGE_SIZE / 4 - 3];
+    int attrNumber;
+    int emptyPageHead;
+    AttrInfoRead attributions[MAX_COL_NUM];
 };
 
 #endif //DATABASE_PAGEHEADERFILE_H

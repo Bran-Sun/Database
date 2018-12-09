@@ -15,7 +15,7 @@
 class IX_Manager
 {
 public:
-    IX_Manager(FileManager *fm, BufPageManager *bpm) {
+    IX_Manager(std::shared_ptr<FileManager> fm, std::shared_ptr<BufPageManager> bpm) {
         _fm = fm;
         _bpm = bpm;
     }
@@ -26,8 +26,8 @@ public:
     int closeIndex(IX_IndexHandle &handle);
     
 private:
-    FileManager *_fm;
-    BufPageManager *_bpm;
+    std::shared_ptr<FileManager> _fm;
+    std::shared_ptr<BufPageManager> _bpm;
 };
 
 

@@ -33,7 +33,7 @@ int IX_IndexHandle::forcePages()
     return 0;
 }
 
-void IX_IndexHandle::init(IX_HeaderPage *header, BufPageManager *bpm)
+void IX_IndexHandle::init(IX_HeaderPage *header, std::shared_ptr<BufPageManager> bpm)
 {
     _modifyIndex.clear();
     _emptyPageSet.clear();

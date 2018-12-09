@@ -228,7 +228,7 @@ void BpNode::insertInternalKey(std::shared_ptr<BpNode> rc, int attrlength)
         _load(_buf, attrlength);
     }
     _keyNum++;
-    std::string tem = new char[attrlength];
+    char *tem = new char[attrlength];
     memcpy(tem, (char*)rc->_keys[0], attrlength);
     _keys.insert(_keys.begin() + _hop, (void*)tem);
     _pageIndex.insert(_pageIndex.begin() + _hop + 1, rc->getPageID());

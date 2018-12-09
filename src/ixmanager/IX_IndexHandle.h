@@ -23,7 +23,7 @@ public:
     }
     ~IX_IndexHandle() {}
     
-    void init(IX_HeaderPage *header, BufPageManager* bpm);
+    void init(IX_HeaderPage *header, std::shared_ptr<BufPageManager> bpm);
     void setFileID(int fileID) { _fileID = fileID; }
     bool isOpen() const { return _open; }
     bool isHeaderModify() const { return _headerModify; }
@@ -51,7 +51,7 @@ private:
 private:
     int _fileID;
     bool _open, _headerModify;
-    BufPageManager *_bpm;
+    std::shared_ptr<BufPageManager> _bpm;
     int _pageNumber, _recordNumber, _rootPos, _maxKeyPerPage;
     int _minKeyPerPage;
     AttrType _attrType;
