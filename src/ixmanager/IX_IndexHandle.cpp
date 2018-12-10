@@ -349,7 +349,7 @@ int IX_IndexHandle::getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, v
         node = nextNode;
     }
     
-    key = node->_keys[nodeIndex];
+    key = (void*)node->_keys[nodeIndex].data.data();
     rid = node->_rids[nodeIndex];
     return 0;
 }

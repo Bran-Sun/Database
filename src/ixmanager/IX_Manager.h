@@ -20,9 +20,9 @@ public:
         _bpm = bpm;
     }
     
-    int createIndex(const char *filename, int indexNo, AttrType attrtype, int attrLength);
-    int destroyIndex(const char *filename, int indexNo);
-    int openIndex(const char *filename, int indexNo, IX_IndexHandle &handle);
+    int createIndex(const std::string &filename, int indexNo, AttrType attrtype, int attrLength);
+    int destroyIndex(const std::string &filename, int indexNo);
+    int openIndex(const std::string &filename, int indexNo, IX_IndexHandle &handle);
     int closeIndex(IX_IndexHandle &handle);
     
 private:

@@ -26,6 +26,8 @@
 #include "recordmanager/RM_Manager.h"
 #include "ixmanager/IX_IndexHandle.h"
 #include "ixmanager/IX_Manager.h"
+#include "smmanager/SM_Manager.h"
+#include "smmanager/DatabaseHandle.h"
 #include <iostream>
 
 using namespace std;
@@ -74,35 +76,46 @@ int main() {
     //程序结束前可以调用BufPageManager的某个函数将缓存中的内容写回
     //具体的函数大家可以看看ppt或者程序的注释
     */
+    
     /*
-    RM_Manager *rm_manager = new RM_Manager(fm, bpm);
-    rm_manager->createFile("testfile.txt", 100);
-    RM_FileHandle *handle = new RM_FileHandle();
-    rm_manager->openFile("testfile.txt", handle);
-    
-    std::vector<int> arr;
-    for (int i = 0; i < 10; i++)
-        arr.push_back(i);
-    char *data = (char*)arr.data();
-    RID rid(0, 0);
-    handle->insertRecord(data, rid);
-    
-    std::vector<int> sec;
-    for (int i = 0; i < 10; i++)
-        sec.push_back(i + 100);
-    handle->insertRecord((char*)sec.data(), rid);
-    rm_manager->closeFile(handle);
-    */
-    std::shared_ptr<IX_Manager> manager = std::make_shared<IX_Manager>(IX_Manager(fm, bpm));
-    manager->createIndex("test0", 0, INT, 4);
-    
-    IX_IndexHandle handle;
-    manager->openIndex("test0", 0, handle);
     clock_t start, end;
-    
     start = clock();
     
-    int number = 1000000;
+    std::shared_ptr<RM_Manager> rm_manager = std::make_shared<RM_Manager>(RM_Manager(fm, bpm));
+    std::string tableName = "Student";
+    
+    std::vector<AttrInfo> infoIn;
+    infoIn.emplace_back("name", 50, STRING);
+    infoIn.emplace_back("age", 4, INT);
+    
+    rm_manager->createFile(tableName, infoIn);
+    RM_FileHandle handle;
+    rm_manager->openFile(tableName, handle);
+    
+    for (int k = 0; k < 1000000; k++)
+    {
+        std::vector<char> arr;
+        for ( int i = 0; i < 58; i++ )
+            arr.push_back('a');
+        char *data = arr.data();
+        RID rid(0, 0);
+        handle.insertRecord(data, rid);
+    }
+    
+    rm_manager->closeFile(handle);
+    */
+    
+    
+    clock_t start, end;
+    start = clock();
+    
+    std::shared_ptr<IX_Manager> manager = std::make_shared<IX_Manager>(IX_Manager(fm, bpm));
+    manager->createIndex("Student", 0, INT, 4);
+    
+    IX_IndexHandle handle;
+    manager->openIndex("Student", 0, handle);
+    
+    int number = 100000;
     int begin = 1;
     int *array = new int[number];
     for (int i = 0; i < number; i++)
@@ -115,6 +128,26 @@ int main() {
 //    handle.deleteEntry((void*)p, RID(60, 60));
     manager->closeIndex(handle);
     
+    /*
+    clock_t start, end;
+    start = clock();
+    
+    SM_Manager manager;
+    DatabaseHandle handle;
+    std::string dbName = "School";
+    manager.openDb(dbName, handle);
+    
+    std::string tableName = "Student";
+    std::string indexName = "name";
+    
+    std::vector<AttrInfo> infoIn;
+    infoIn.emplace_back("name", 50, STRING);
+    infoIn.emplace_back("age", 4, INT);
+    
+    handle.createIndex(tableName, indexName);
+    
+    manager.closeDb(handle);
+    */
     end = clock();
     cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
     return 0;

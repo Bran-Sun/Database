@@ -19,6 +19,10 @@ DatabaseHandle::DatabaseHandle()
 
 int DatabaseHandle::close()
 {
+    if (!_open) {
+        printf("database is already close!\n");
+        return -1;
+    }
     if (_modifyDbf) _modifyDBFile();
     
     for (auto iter = _tableHandles.begin(); iter != _tableHandles.end(); iter++) {
@@ -46,7 +50,11 @@ int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManage
         printf("dbhandle: database is already open!\n");
         return 1;
     }
-    close(); //open another
+    
+    if (_open)
+    {
+        close(); //open another
+    }
     
     _dbName = filename;
     _fm = fm;
@@ -108,8 +116,9 @@ int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo
     
     _tableHandles.emplace(std::piecewise_construct,
                           std::forward_as_tuple(relName),
-                          std::forward_as_tuple(relName, _rm, _ix));
+                          std::forward_as_tuple(_dbName, relName, attributes, _rm, _ix));
     _tableNames.emplace(relName);
+    _modifyDbf = true;
     return 0;
 }
 
@@ -123,11 +132,11 @@ int DatabaseHandle::dropTable(const std::string &relName)
     
     _tableHandles.at(relName).dropTable();
     _tableNames.erase(relName);
-    
+    _modifyDbf = true;
     return 0;
 }
 
-int DatabaseHandle::createIndex(std::string &relName, std::string &attrName)
+int DatabaseHandle::createIndex(const std::string &relName, const std::string &attrName)
 {
     auto find = _tableNames.find(relName);
     if (find == _tableNames.end()) {
@@ -139,14 +148,14 @@ int DatabaseHandle::createIndex(std::string &relName, std::string &attrName)
     if (openFind == _tableHandles.end()) {
         _tableHandles.emplace(std::piecewise_construct,
                               std::forward_as_tuple(relName),
-                              std::forward_as_tuple(relName, _rm, _ix));
+                              std::forward_as_tuple(_dbName, relName, _rm, _ix));
     }
     int result = _tableHandles.at(relName).createIndex(attrName);
     
     return result;
 }
 
-int DatabaseHandle::dropIndex(std::string &relName, std::string &attrName)
+int DatabaseHandle::dropIndex(const std::string &relName, const std::string &attrName)
 {
     auto find = _tableNames.find(relName);
     if (find == _tableNames.end()) {
@@ -158,7 +167,7 @@ int DatabaseHandle::dropIndex(std::string &relName, std::string &attrName)
     if (openFind == _tableHandles.end()) {
         _tableHandles.emplace(std::piecewise_construct,
                               std::forward_as_tuple(relName),
-                              std::forward_as_tuple(relName, _rm, _ix));
+                              std::forward_as_tuple(_dbName, relName, _rm, _ix));
     }
     int result = _tableHandles.at(relName).dropIndex(attrName);
     return result;
@@ -184,5 +193,5 @@ int DatabaseHandle::load(std::string &relName, std::string &filename)
 
 DatabaseHandle::~DatabaseHandle()
 {
-    close();
+    if (_open) close();
 }

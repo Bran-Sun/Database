@@ -15,8 +15,8 @@ class FileManager {
 private:
 	//FileTable* ftable;
 	int fd[MAX_FILE_NUM];
-	MyBitMap* fm;
-	MyBitMap* tm;
+	MyBitMap fm;
+	MyBitMap tm;
 	int _createFile(const char* name) {
 		FILE* f = fopen(name, "a+");
 		if (f == NULL) {
@@ -46,10 +46,7 @@ public:
 	/*
 	 * FilManager构造函数
 	 */
-	FileManager() {
-		fm = new MyBitMap(MAX_FILE_NUM, 1);
-		tm = new MyBitMap(MAX_TYPE_NUM, 1);
-	}
+	FileManager(): fm(MAX_FILE_NUM, 1), tm(MAX_TYPE_NUM, 1) { }
 	/*
 	 * @函数名writePage
 	 * @参数fileID:文件id，用于区别已经打开的文件
@@ -100,7 +97,7 @@ public:
 	 * 返回:操作成功，返回0
 	 */
 	int closeFile(int fileID) {
-		fm->setBit(fileID, 1);
+		fm.setBit(fileID, 1);
 		int f = fd[fileID];
 		close(f);
 		return 0;
@@ -137,22 +134,20 @@ public:
 	 * 返回:如果成功打开，在fileID中存储为该文件分配的id，返回true，否则返回false
 	 */
 	bool openFile(const char* name, int& fileID) {
-		fileID = fm->findLeftOne();
-		fm->setBit(fileID, 0);
+		fileID = fm.findLeftOne();
+		fm.setBit(fileID, 0);
 		_openFile(name, fileID);
 		return true;
 	}
 	int newType() {
-		int t = tm->findLeftOne();
-		tm->setBit(t, 0);
+		int t = tm.findLeftOne();
+		tm.setBit(t, 0);
 		return t;
 	}
 	void closeType(int typeID) {
-		tm->setBit(typeID, 1);
+		tm.setBit(typeID, 1);
 	}
 	void shutdown() {
-		delete tm;
-		delete fm;
 	}
 	~FileManager() {
 		this->shutdown();

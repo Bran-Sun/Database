@@ -9,30 +9,32 @@ TableHandle::TableHandle()
     _open = false;
 }
 
-TableHandle::TableHandle(const std::string &relName, std::shared_ptr<RM_Manager> rm, std::shared_ptr<IX_Manager> ix)
+TableHandle::TableHandle(const std::string &dbName, const std::string &relName, std::shared_ptr<RM_Manager> rm, std::shared_ptr<IX_Manager> ix)
 {
     _rm = rm;
     _ix = ix;
     
     _tableName = relName;
-    _rm->openFile(_tableName, _rmHandle);
+    _dbName = dbName;
+    _rm->openFile(_dbName + "/" + _tableName, _rmHandle);
     _attributions = _rmHandle.getAttrInfo();
     
     _openIndex();
     _open = true;
 }
 
-TableHandle::TableHandle(const std::string &relName, std::vector<AttrInfo> attributes, std::shared_ptr<RM_Manager> rm,
+TableHandle::TableHandle(const std::string &dbName, const std::string &relName, std::vector<AttrInfo> attributes, std::shared_ptr<RM_Manager> rm,
                          std::shared_ptr<IX_Manager> ix)
 {
     _tableName = relName;
+    _dbName = dbName;
     _rm = rm;
     _ix = ix;
     
     _attributions  = attributes;
-    _rm->createFile(_tableName, _attributions); //create
+    _rm->createFile(_dbName + "/" + _tableName, _attributions); //create
     
-    _rm->openFile(_tableName, _rmHandle);
+    _rm->openFile(_dbName + "/" + _tableName, _rmHandle);
     //index is empry!
     
     _open = true;
@@ -61,7 +63,7 @@ int TableHandle::dropTable()
     return 0;
 }
 
-int TableHandle::createIndex(std::string &attrName)
+int TableHandle::createIndex(const std::string &attrName)
 {
     auto find = _ixHandles.find(attrName);
     if (find != _ixHandles.end()) {
@@ -78,8 +80,8 @@ int TableHandle::createIndex(std::string &attrName)
         if  (_attributions[indexNo].attrName == attrName) {
             break;
         }
-    _ix->createIndex(_tableName.c_str(), indexNo, _attributions[indexNo].attrType, _attributions[indexNo].attrLength);
-    _ix->openIndex(_tableName.c_str(), indexNo, _ixHandles.at(attrName));
+    _ix->createIndex(_dbName + "/" + _tableName, indexNo, _attributions[indexNo].attrType, _attributions[indexNo].attrLength);
+    _ix->openIndex(_dbName + "/" + _tableName, indexNo, _ixHandles.at(attrName));
     
     _rmHandle.addIndex(indexNo);
     _attributions[indexNo].isIndex = true;
@@ -87,7 +89,7 @@ int TableHandle::createIndex(std::string &attrName)
     return 0;
 }
 
-int TableHandle::dropIndex(std::string &attrName)
+int TableHandle::dropIndex(const std::string &attrName)
 {
     auto find =  _ixHandles.find(attrName);
     if (find == _ixHandles.end()) {
@@ -102,7 +104,7 @@ int TableHandle::dropIndex(std::string &attrName)
         }
     
     _ix->closeIndex(_ixHandles.at(attrName));
-    _ix->destroyIndex(_tableName.c_str(), indexNo);
+    _ix->destroyIndex(_dbName + "/" + _tableName, indexNo);
     _ixHandles.erase(attrName);
     
     _attributions[indexNo].isIndex = false;

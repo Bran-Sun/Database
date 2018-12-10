@@ -20,9 +20,9 @@ public:
         _bpm = bpm;
     }
     
-    int createFile(std::string &filename, std::vector<AttrInfo> attributes);
-    int destroyFile(std::string &filename);
-    int openFile(std::string &filename, RM_FileHandle &handle);
+    int createFile(const std::string &filename, std::vector<AttrInfo> attributes);
+    int destroyFile(const std::string &filename);
+    int openFile(const std::string &filename, RM_FileHandle &handle);
     int closeFile(RM_FileHandle &handleFile);
     
     ~RM_Manager() { }

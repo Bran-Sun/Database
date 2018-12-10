@@ -22,6 +22,20 @@ struct AttrInfo {
         this->isNull = r.isNull;
         this->isIndex = r.isIndex;
     }
+    
+    AttrInfo(std::string name, int length, AttrType type) {
+            attrName = name;
+            attrLength = length;
+            attrType = type;
+            isNull = false;
+            isIndex = false;
+    }
+    
+    AttrInfo() {
+            attrLength = 0;
+            isNull = false;
+            isIndex = false;
+    }
 };
 
 struct DataAttrInfo {

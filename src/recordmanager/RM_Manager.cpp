@@ -12,7 +12,7 @@
  * 返回:操作成功，返回0
  * 功能:创建文件，并在第一页注明文件记录长度
  */
-int RM_Manager::createFile(std::string &filename, std::vector<AttrInfo> attributes)
+int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> attributes)
 {
     printf("rm_manager: creating record file %s ...\n", filename.c_str());
     
@@ -63,7 +63,7 @@ int RM_Manager::createFile(std::string &filename, std::vector<AttrInfo> attribut
     return 0;
 }
 
-int RM_Manager::destroyFile(std::string &filename)
+int RM_Manager::destroyFile(const std::string &filename)
 {
     std::string newName;
     newName = filename + ".data" ;
@@ -71,7 +71,7 @@ int RM_Manager::destroyFile(std::string &filename)
     return suc;
 }
 
-int RM_Manager::openFile(std::string &filename, RM_FileHandle &handle)
+int RM_Manager::openFile(const std::string &filename, RM_FileHandle &handle)
 {
     std::string newName;
     newName = filename + ".data" ;

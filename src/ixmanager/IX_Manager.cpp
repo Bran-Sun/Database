@@ -6,7 +6,7 @@
 #include "IX_HeaderPage.h"
 #include <sstream>
 
-int IX_Manager::createIndex(const char *filename, int indexNo, AttrType attrtype, int attrLength)
+int IX_Manager::createIndex(const std::string &filename, int indexNo, AttrType attrtype, int attrLength)
 {
     std::stringstream newName;
     newName << filename << "." << indexNo;
@@ -56,7 +56,7 @@ int IX_Manager::createIndex(const char *filename, int indexNo, AttrType attrtype
     return 0;
 }
 
-int IX_Manager::destroyIndex(const char *filename, int indexNo)
+int IX_Manager::destroyIndex(const std::string &filename, int indexNo)
 {
     std::stringstream newName;
     newName << filename << "." << indexNo;
@@ -71,7 +71,7 @@ int IX_Manager::destroyIndex(const char *filename, int indexNo)
     return suc;
 }
 
-int IX_Manager::openIndex(const char *filename, int indexNo, IX_IndexHandle &handle)
+int IX_Manager::openIndex(const std::string &filename, int indexNo, IX_IndexHandle &handle)
 {
     std::stringstream newName;
     newName << filename << "." << indexNo;

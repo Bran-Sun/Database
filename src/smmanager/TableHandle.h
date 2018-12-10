@@ -17,14 +17,14 @@ class TableHandle
 public:
     TableHandle();
     //open a table
-    TableHandle(const std::string &relName, std::shared_ptr<RM_Manager> rm, std::shared_ptr<IX_Manager> ix);
+    TableHandle(const std::string &dbName, const std::string &relName, std::shared_ptr<RM_Manager> rm, std::shared_ptr<IX_Manager> ix);
     //create a table
-    TableHandle(const std::string &relName, std::vector<AttrInfo> attributes, std::shared_ptr<RM_Manager> rm, std::shared_ptr<IX_Manager> ix);
+    TableHandle(const std::string &dbName, const std::string &relName, std::vector<AttrInfo> attributes, std::shared_ptr<RM_Manager> rm, std::shared_ptr<IX_Manager> ix);
     //drop a table;
     int dropTable();
     
-    int createIndex(std::string &attrName);
-    int dropIndex(std::string &attrName);
+    int createIndex(const std::string &attrName);
+    int dropIndex(const std::string &attrName);
     int close();
     
 private:
@@ -32,7 +32,7 @@ private:
     
 private:
     bool _open;
-    std::string _tableName;
+    std::string _tableName, _dbName;
     std::vector<AttrInfo> _attributions;
     std::shared_ptr<RM_Manager> _rm;
     std::shared_ptr<IX_Manager> _ix;

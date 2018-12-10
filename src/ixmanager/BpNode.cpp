@@ -82,9 +82,7 @@ void BpNode::insertTerminalKV(void *pData, int attrlength, const RID &rid)
         _load(_buf, attrlength);
     }
     _keyNum++;
-    char *data = new char[attrlength];
-    memcpy(data, (char*)pData, (size_t) attrlength);
-    _keys.insert(_keys.begin() + _hop, (void*)data);
+    _keys.emplace(_keys.begin() + _hop, pData, attrlength);
     _rids.insert(_rids.begin() + _hop, rid);
 }
 
@@ -152,9 +150,7 @@ void BpNode::_load(BufType bt, int attrlength)
         char *p = (char *) bt + (keyNum + 1 + IX_NODE_H) * 4;
         for ( int i = 0; i < keyNum; i++ )
         {
-            char *tem = new char[attrlength];
-            memcpy(tem, p, attrlength);
-            _keys.push_back((void *) tem);
+            _keys.emplace_back(p, attrlength);
             p = p + attrlength;
         }
     } else {
@@ -164,9 +160,7 @@ void BpNode::_load(BufType bt, int attrlength)
         
         char *p = (char *) bt + keyNum * 8 + IX_NODE_H * 4;
         for (int i = 0; i < keyNum; i++) {
-            char *tem = new char[attrlength];
-            memcpy(tem, p, attrlength);
-            _keys.push_back((void*)tem);
+            _keys.emplace_back(p, attrlength);
             p = p + attrlength;
         }
     }
@@ -193,7 +187,7 @@ void BpNode::write(BufType bt, int attrlength)
         
         char *p = (char *) bt + _keys.size() * 8 + IX_NODE_H * 4;
         for (int i = 0; i < _keys.size(); i++) {
-            memcpy(p, (char*)_keys[i], attrlength);
+            memcpy(p, _keys[i].data.data(), attrlength);
             p = p + attrlength;
         }
     } else {
@@ -205,7 +199,7 @@ void BpNode::write(BufType bt, int attrlength)
         char *p = (char *) bt + (_keys.size() + 1 + IX_NODE_H) * 4;
         for ( int i = 0; i < _keys.size(); i++ )
         {
-            memcpy(p, (char*)_keys[i], attrlength);
+            memcpy(p, _keys[i].data.data(), attrlength);
             p = p + attrlength;
         }
     }
@@ -213,10 +207,8 @@ void BpNode::write(BufType bt, int attrlength)
 
 void BpNode::initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc, int attrlength)
 {
-    char *tem = new char[attrlength];
-    memcpy(tem, (char*)rc->_keys[0], attrlength);
     _keyNum++;
-    _keys.push_back((void *) tem);
+    _keys.push_back(rc->_keys[0]);
     _pageIndex.push_back(lc->_pageID);
     _pageIndex.push_back(rc->_pageID);
 }
@@ -228,9 +220,7 @@ void BpNode::insertInternalKey(std::shared_ptr<BpNode> rc, int attrlength)
         _load(_buf, attrlength);
     }
     _keyNum++;
-    char *tem = new char[attrlength];
-    memcpy(tem, (char*)rc->_keys[0], attrlength);
-    _keys.insert(_keys.begin() + _hop, (void*)tem);
+    _keys.insert(_keys.begin() + _hop, rc->_keys[0]);
     _pageIndex.insert(_pageIndex.begin() + _hop + 1, rc->getPageID());
 }
 

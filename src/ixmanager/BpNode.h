@@ -11,6 +11,17 @@
 
 #define IX_NODE_H 4
 
+struct Key {
+    std::vector<char> data;
+    Key(const char* p, int length): data(length) {
+        memcpy(data.data(), p, length);
+    }
+    
+    Key(const void* p, int length): data(length) {
+        memcpy(data.data(), p, length);
+    }
+};
+
 class BpNode
 {
 public:
@@ -55,7 +66,7 @@ private:
     bool _terminal, _leaf, _root;
     int _hop; //record formal search
     BufType _buf;
-    std::vector<void*> _keys;
+    std::vector<Key> _keys;
     std::vector<int> _pageIndex;
     std::vector<std::shared_ptr<BpNode>> _pagePointer;
     std::vector<RID> _rids;

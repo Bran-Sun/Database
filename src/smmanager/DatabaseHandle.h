@@ -34,8 +34,8 @@ public:
     int createTable(const std::string &relName, std::vector<AttrInfo> attributes);
     int dropTable(const std::string &relName);
     
-    int createIndex(std::string &relName, std::string &attrName);
-    int dropIndex(std::string &relName, std::string &attrName);
+    int createIndex(const std::string &relName, const std::string &attrName);
+    int dropIndex(const std::string &relName, const std::string &attrName);
     
     //int load(std::string &relName, std::string &filename);
     
