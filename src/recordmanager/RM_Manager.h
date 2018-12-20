@@ -10,7 +10,7 @@
 #include "RM_FileHandle.h"
 #include "../utils/pagedef.h"
 #include "PageHeaderFile.h"
-#include "../smmanager/parser.h"
+#include "../smmanager/DataInfo.h"
 
 class RM_Manager
 {

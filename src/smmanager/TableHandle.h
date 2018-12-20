@@ -9,7 +9,7 @@
 #include "../recordmanager/RM_FileHandle.h"
 #include "../ixmanager/IX_Manager.h"
 #include "../ixmanager/IX_IndexHandle.h"
-#include "parser.h"
+#include "DataInfo.h"
 #include <map>
 
 class TableHandle

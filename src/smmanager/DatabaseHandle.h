@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 #include <set>
-#include "parser.h"
+#include "DataInfo.h"
 #include "../utils/pagedef.h"
 #include "../bufmanager/BufPageManager.h"
 #include "../fileio/FileManager.h"

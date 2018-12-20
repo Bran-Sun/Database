@@ -12,7 +12,7 @@
 #include <list>
 #include <vector>
 #include <set>
-#include "../smmanager/parser.h"
+#include "../smmanager/DataInfo.h"
 
 #define RM_HEADER_LEN 1
 #define EMPTYNEXT 0

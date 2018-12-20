@@ -1,0 +1,86 @@
+<program>  := <stmt> <stmtList>
+            | %empty
+<stmtList> := <stmt> <stmtList>
+            | %empty
+
+<stmt>  := <showStmt> ’;’
+           | <createStmt> ';'
+         | <useStmt>’;’
+         | <tbStmt>’;’
+         | <idxStmt>’;’
+
+<showStmt> := SHOW DATABASES
+            | SHOW TABLES
+
+<createStmt> := CREATE DATABASE <dbName>
+            | CREATE TABLE <tbName> '(' <fieldList> ')'
+            | CREATE INDEX <tbName> '(' IDENTIFIER(colName) ')'
+
+<dropStmt> := DROP DATABASE <dbName>
+            | DROP TABLE <tbName>
+            | DROP INDEX <tbName> '('<colName>')'
+
+
+<useStmt>  := USE <dbName>
+
+<tbStmt>  := DESC <tbName>
+           | INSERT INTO <tbName> VALUES <valueLists>
+           | DELETE FROM <tbName> WHERE <whereClause>
+           | UPDATE <tbName> SET <setClause> WHERE <whereClause>
+           | SELECT <selector> FROM <tableList> WHERE <whereClause>
+
+<fieldList>  := <field> <fieldNext> {'identifier', primary foreign}
+            | empty  {')'}
+
+<fieldNext> := ',' <field> <filedNext>
+            | empty {')'}
+
+<field>  := <colName> <type> <nullReciever>
+      | PRIMARY KEY ’(’<columnList>’)’  //not implememt
+      | FOREIGN KEY ’(’<colName>’)’ REFERENCES <tbName>’(’<colName>’)’
+
+<nullReceiver> := NOT NULL
+            | empty {')', ','}
+
+<type>  := INT
+         | VARCHAR '(' <VALUE_INT> ')'
+         | DATE
+         | FLOAT
+
+<valueLists>  := ’(’<valueList>’)’
+| <valueLists>’, ’ ’ (’<valueList>’) ’
+
+<valueList>  := <value>
+| <valueList>’, ’<value>
+
+<value>  := VALUE_INT
+          | VALUE_STRING
+          | NULL
+
+<whereClause>  := <col><op><expr>
+                | <col> IS [NOT] NULL
+                | <whereClause> AND <whereClause>
+
+<col>  := [<tbName>’.’]<colName>
+
+<op>  := ‘=’ | ‘<>’ | ‘<=’ | ‘>=’ | ‘<’ | ‘>’
+
+<expr>  := <value>
+         | <col>
+
+<setClause>  := <colName>’=’<value>
+| <setClause>’, ’<colName>’=’<value>
+
+<selector>  := * | <col>[,<col>]*
+
+<tableList>  := <tbName>
+| <tableList>’,’<tbName>
+
+<columnList>  := <colName>
+            | <columnList>’,’<colName>
+
+<dbName>  := IDENTIFIER
+
+<tbName>  := IDENTIFIER
+
+<colName> := IDENTIFIER

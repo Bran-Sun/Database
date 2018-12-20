@@ -2,8 +2,8 @@
 // Created by 孙桢波 on 2018/12/6.
 //
 
-#ifndef DATABASE_PARSER_H
-#define DATABASE_PARSER_H
+#ifndef DATABASE_DATAINFO_H
+#define DATABASE_DATAINFO_H
 
 #include "../utils/pagedef.h"
 #include "../recordmanager/PageHeaderFile.h"
@@ -38,13 +38,23 @@ struct AttrInfo {
     }
 };
 
-struct DataAttrInfo {
-    std::string relName;
-    std::string attrName;
-    int offset;
-    AttrType attrType;
+struct WhereVal{
+    bool isVal;
+    std::string tbName, indexName;
+    AttrType type;
+    std::string value;
     int attrLength;
-    int indexNo;
 };
 
-#endif //DATABASE_PARSER_H
+struct WhereClause{
+    WhereVal left, right;
+    ComOp comOp;
+};
+
+struct DataAttr{
+    std::string data;
+    AttrType attrType;
+    int attrLength;
+};
+
+#endif //DATABASE_DATAINFO_H
