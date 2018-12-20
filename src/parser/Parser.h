@@ -32,10 +32,18 @@ namespace parser
         void _parseUseStmt();
         void _parseTbStmt();
         
-        std::vector<AttrInfo> _parseFieldList();
-        AttrInfo _parseField();
+        void _parseFieldList();
+        void _parseField();
+        void _parseType(AttrInfo &info);
+        bool _parseNullReceiver();
+        void _parseFieldNext();
+        
+        int _parseVALUEINT();
+        
     private:
         std::vector<Action> _actions;
+        std::vector<AttrInfo> _attrInfo;
+        int _primaryNum;
         Lexer _lexer;
         Token _lookahead;
     };

@@ -10,10 +10,10 @@
 #include <string>
 
 struct AttrInfo {
-    std::string attrName;
+    std::string attrName, foreignTb, foreignIndex;
     int attrLength;
     AttrType attrType;
-    bool isNull, isIndex;
+    bool isNull, isIndex, isPrimary, isForeign;
     
     AttrInfo(AttrInfoRead r) {
         this->attrName = std::string(r.attrName);
@@ -21,6 +21,9 @@ struct AttrInfo {
         this->attrType = r.attrType;
         this->isNull = r.isNull;
         this->isIndex = r.isIndex;
+        //TODO
+        this->isPrimary = false;
+        this->isForeign = false;
     }
     
     AttrInfo(std::string name, int length, AttrType type) {
@@ -29,12 +32,16 @@ struct AttrInfo {
             attrType = type;
             isNull = false;
             isIndex = false;
+            isPrimary = false;
+            isForeign = false;
     }
     
     AttrInfo() {
             attrLength = 0;
             isNull = false;
             isIndex = false;
+            isPrimary = false;
+            isForeign = false;
     }
 };
 

@@ -3,22 +3,22 @@
 <stmtList> := <stmt> <stmtList>
             | %empty
 
-<stmt>  := <showStmt> ’;’
-           | <createStmt> ';'
-         | <useStmt>’;’
-         | <tbStmt>’;’
-         | <idxStmt>’;’
+<stmt>  := <showStmt> ’;’ //done
+           | <createStmt> ';'   //done
+         | <useStmt>’;’     //done
+         | <tbStmt>’;’      //done
+         | <idxStmt>’;’     //done
 
-<showStmt> := SHOW DATABASES
-            | SHOW TABLES
+<showStmt> := SHOW DATABASES    //done
+            | SHOW TABLES   //done
 
-<createStmt> := CREATE DATABASE <dbName>
-            | CREATE TABLE <tbName> '(' <fieldList> ')'
-            | CREATE INDEX <tbName> '(' IDENTIFIER(colName) ')'
+<createStmt> := CREATE DATABASE <dbName>    //done
+            | CREATE TABLE <tbName> '(' <fieldList> ')' //done
+            | CREATE INDEX <tbName> '(' IDENTIFIER(colName) ')' //done
 
-<dropStmt> := DROP DATABASE <dbName>
-            | DROP TABLE <tbName>
-            | DROP INDEX <tbName> '('<colName>')'
+<dropStmt> := DROP DATABASE <dbName>    //done
+            | DROP TABLE <tbName>   //done
+            | DROP INDEX <tbName> '('<colName>')'   //done
 
 
 <useStmt>  := USE <dbName>
@@ -29,23 +29,23 @@
            | UPDATE <tbName> SET <setClause> WHERE <whereClause>
            | SELECT <selector> FROM <tableList> WHERE <whereClause>
 
-<fieldList>  := <field> <fieldNext> {'identifier', primary foreign}
-            | empty  {')'}
+<fieldList>  := <field> <fieldNext> {'identifier', primary foreign} //done
+            | empty  {')'}  //done
 
-<fieldNext> := ',' <field> <filedNext>
-            | empty {')'}
+<fieldNext> := ',' <field> <filedNext>  //done
+            | empty {')'}   //done
 
-<field>  := <colName> <type> <nullReciever>
-      | PRIMARY KEY ’(’<columnList>’)’  //not implememt
-      | FOREIGN KEY ’(’<colName>’)’ REFERENCES <tbName>’(’<colName>’)’
+<field>  := <colName> <type> <nullReciever>     //done
+      | PRIMARY KEY ’(’<column>’)’   //done
+      | FOREIGN KEY ’(’<colName>’)’ REFERENCES <tbName>’(’<colName>’)’  //done
 
-<nullReceiver> := NOT NULL
-            | empty {')', ','}
+<nullReceiver> := NOT NULL      //done
+            | empty {')', ','}  //done
 
-<type>  := INT
-         | VARCHAR '(' <VALUE_INT> ')'
-         | DATE
-         | FLOAT
+<type>  := INT '(' <VALUE_INT> ')'  //done
+         | VARCHAR '(' <VALUE_INT> ')'  //done
+         | DATE     //done
+         | FLOAT    //done
 
 <valueLists>  := ’(’<valueList>’)’
 | <valueLists>’, ’ ’ (’<valueList>’) ’
