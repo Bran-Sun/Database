@@ -9,6 +9,9 @@
 #include "Lexer.h"
 #include "../Action/Action.h"
 #include "../smmanager/DataInfo.h"
+#include "../Action/ShowAction.h"
+#include "../Action/CreateAction.h"
+#include "../Action/DropAction.h"
 
 namespace parser
 {
@@ -38,11 +41,40 @@ namespace parser
         bool _parseNullReceiver();
         void _parseFieldNext();
         
-        int _parseVALUEINT();
+        std::string _parseVALUEDATA();
+        int _convertToInt(std::string data);
+        
+        void _parseValueLists();
+        void _parseValueNext();
+        void _parseValueList();
+        void _parseValue();
+        void _parseValueReceiver();
+        
+        void _parseWhereClauseLists();
+        void _parseWhereClause();
+        void _parseWhereClauseReceiver();
+        Col _parseCol();
+        void _parseColSecond();
+        WhereVal _parseExpr();
+        
+        void _parseSetClauseLists();
+        void _parseSetClause();
+        void _parseSetClauseReceiver();
+        
+        void _parseSelector();
+        void _parseTableLists();
         
     private:
-        std::vector<Action> _actions;
+        std::vector<Col> _selector;
+        bool _selectAll;
+        std::vector<std::string> _tbList;
+        
+        std::vector<SetClause> _setClause;
+        WhereClause _where;
+        std::vector<std::shared_ptr<Action>> _actions;
         std::vector<AttrInfo> _attrInfo;
+        std::vector<WhereClause> _whereClause;
+        std::vector<std::vector<DataAttr>> _data;
         int _primaryNum;
         Lexer _lexer;
         Token _lookahead;

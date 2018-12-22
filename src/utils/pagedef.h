@@ -74,7 +74,8 @@ enum AttrType {
     FLOAT,
     STRING,
     CHAR,
-    DATE
+    DATE,
+    NUL
 };
 
 enum ComOp {

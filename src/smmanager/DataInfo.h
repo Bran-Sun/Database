@@ -45,12 +45,34 @@ struct AttrInfo {
     }
 };
 
+struct Col{
+    std::string tbName, indexName;
+    
+    Col() {}
+    Col(std::string t, std::string i): tbName(t), indexName(i) {}
+};
+
 struct WhereVal{
     bool isVal;
-    std::string tbName, indexName;
+    bool useNull;
+    bool isNull;
+    Col col;
     AttrType type;
     std::string value;
-    int attrLength;
+    
+    WhereVal() {
+        isNull = false;
+        useNull = false;
+    }
+};
+
+struct SetClause{
+    std::string value;
+    Col col;
+    AttrType attrType;
+    
+    SetClause() {}
+    SetClause(Col c, std::string v, AttrType t) : col(c), value(v), attrType(t) {}
 };
 
 struct WhereClause{
@@ -61,7 +83,14 @@ struct WhereClause{
 struct DataAttr{
     std::string data;
     AttrType attrType;
-    int attrLength;
+    bool isNull;
+    
+    DataAttr() {
+        isNull = false;
+    }
+    
+    DataAttr(std::string d, AttrType type, int len): data(d), attrType(type) { isNull = false; }
+    DataAttr(bool null): isNull(null) {}
 };
 
 #endif //DATABASE_DATAINFO_H

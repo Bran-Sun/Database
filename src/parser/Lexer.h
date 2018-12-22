@@ -54,6 +54,17 @@ namespace parser
         COMMA,
         LEFTPARENTHESIS,
         RIGHTPARENTHESIS,
+        SEMICOLON,
+        PERIOD,
+        STARKEY,
+        
+        EQ,
+        NE,
+        LT,
+        GT,
+        LE,
+        GE,
+        EQUAL,
       
         ERROR
     };

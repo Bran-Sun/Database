@@ -25,9 +25,9 @@
 
 <tbStmt>  := DESC <tbName>
            | INSERT INTO <tbName> VALUES <valueLists>
-           | DELETE FROM <tbName> WHERE <whereClause>
-           | UPDATE <tbName> SET <setClause> WHERE <whereClause>
-           | SELECT <selector> FROM <tableList> WHERE <whereClause>
+           | DELETE FROM <tbName> WHERE <whereClauseLists>
+           | UPDATE <tbName> SET <setClauseLists> WHERE <whereClauseLists>
+           | SELECT <selector> FROM <tableLists> WHERE <whereClauseLists>
 
 <fieldList>  := <field> <fieldNext> {'identifier', primary foreign} //done
             | empty  {')'}  //done
@@ -47,40 +47,50 @@
          | DATE     //done
          | FLOAT    //done
 
-<valueLists>  := ’(’<valueList>’)’
-| <valueLists>’, ’ ’ (’<valueList>’) ’
+<valueLists>  := ’(’<valueList>’)’ <valueNext>  //done
 
-<valueList>  := <value>
-| <valueList>’, ’<value>
+<valueNext>    := ',' '(' <valueList> ')' <valueNext> //done
+                |   empty   {';'}   //done
 
-<value>  := VALUE_INT
-          | VALUE_STRING
-          | NULL
+<valueList>  := <value> <valueReceiver> //done
 
-<whereClause>  := <col><op><expr>
-                | <col> IS [NOT] NULL
-                | <whereClause> AND <whereClause>
+<valueReceiver> := ',' <value>  //done
+                | empty {')'}   //done
 
-<col>  := [<tbName>’.’]<colName>
+<value>  := VALUE_INT   //done
+          | VALUE_FLOAT //done
+          | VALUE_STRING    //done
+          | NULL    //done
 
-<op>  := ‘=’ | ‘<>’ | ‘<=’ | ‘>=’ | ‘<’ | ‘>’
+<whereClauseLists>  := <WhereClause> <whreCaluseReceiver>   //done
 
-<expr>  := <value>
-         | <col>
+<whereClauseReceiver> := AND <WhereClause> //done
+                |   empty {';'}    //done
 
-<setClause>  := <colName>’=’<value>
-| <setClause>’, ’<colName>’=’<value>
+<whereClause>   := <col> <colsecond>    //done
+
+<colsecond>     := <op> <expr>  //done
+                |  IS [NOT] NULL    //done
+
+<col>  := [<tbName>’.’]<colName>    //done
+
+<op>  := ‘=’ | ‘<>’ | ‘<=’ | ‘>=’ | ‘<’ | ‘>’ //done
+
+<expr>  := <value>  //done
+         | <col>    //done
+
+<setClauseLists>  := <setClause> <setClauseReceiver> //done
+<setClause>     :=  <colName>’=’<value> //done
+<setClauseReceiver> := ',' <setClause> <setClauseReceiver> //done
+                | empty {WHERE} //done
 
 <selector>  := * | <col>[,<col>]*
 
-<tableList>  := <tbName>
-| <tableList>’,’<tbName>
+<tableLists>  := <tbName>
+| <tableList>’,’<tbName>    //done with hack
 
-<columnList>  := <colName>
-            | <columnList>’,’<colName>
+<dbName>  := IDENTIFIER //done
 
-<dbName>  := IDENTIFIER
+<tbName>  := IDENTIFIER //done
 
-<tbName>  := IDENTIFIER
-
-<colName> := IDENTIFIER
+<colName> := IDENTIFIER //done
