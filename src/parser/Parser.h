@@ -12,6 +12,8 @@
 #include "../Action/ShowAction.h"
 #include "../Action/CreateAction.h"
 #include "../Action/DropAction.h"
+#include "../Action/UseAction.h"
+#include "../Action/TableAction.h"
 
 namespace parser
 {
