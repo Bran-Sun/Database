@@ -21,8 +21,8 @@ namespace parser
     {
     public:
         Parser() {}
-        
-        void parse(std::string &content);
+    
+        std::vector<std::shared_ptr<Action>> parse(const std::string &content);
         
     private:
         void _parseProgram();

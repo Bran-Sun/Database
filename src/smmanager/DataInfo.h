@@ -67,12 +67,11 @@ struct WhereVal{
 };
 
 struct SetClause{
-    std::string value;
-    Col col;
+    std::string value, col;
     AttrType attrType;
     
     SetClause() {}
-    SetClause(Col c, std::string v, AttrType t) : col(c), value(v), attrType(t) {}
+    SetClause(std::string c, std::string v, AttrType t) : col(c), value(v), attrType(t) {}
 };
 
 struct WhereClause{
@@ -89,7 +88,7 @@ struct DataAttr{
         isNull = false;
     }
     
-    DataAttr(std::string d, AttrType type, int len): data(d), attrType(type) { isNull = false; }
+    DataAttr(std::string d, AttrType type): data(d), attrType(type) { isNull = false; }
     DataAttr(bool null): isNull(null) {}
 };
 

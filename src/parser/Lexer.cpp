@@ -30,7 +30,7 @@ namespace parser
             {"SELECT",     TokenType::SELECT},
             {"IS",         TokenType::IS},
             {"INT",        TokenType::INT},
-            {"VARCHAR",    TokenType::VARCHAR},
+            {"CHAR",       TokenType::CHAR},
             {"DESC",       TokenType::DESC},
             {"REFERENCES", TokenType::REFERENCES},
             {"INDEX",      TokenType::INDEX},
@@ -45,7 +45,7 @@ namespace parser
         //pad
         _content.clear();
         
-        while (( _pos < _text.length()) && isspace(_text[_pos])) {
+        while (( _pos < _text.length()) && (isspace(_text[_pos]) || (_text[_pos] == '\n'))) {
             _pos++;
         }
         if (_pos == _text.length()) return Token(TokenType::EOS);
@@ -80,7 +80,7 @@ namespace parser
             }
             
             std::string identifier = _content;
-            std::transform(identifier.begin(), identifier.end(), identifier.begin(), toupper);
+            //std::transform(identifier.begin(), identifier.end(), identifier.begin(), toupper);
             if (keyword_map.find(identifier) != keyword_map.end()) {
                 return Token(keyword_map.at(identifier));
             } else {
@@ -128,7 +128,7 @@ namespace parser
         }
         
         //other symbols
-        if (_text[_pos] == ';') {
+        if (_text[_pos] == ',') {
             _pos++;
             return Token(TokenType::COMMA);
         }
@@ -141,6 +141,49 @@ namespace parser
         if (_text[_pos] == ')') {
             _pos++;
             return Token(TokenType::RIGHTPARENTHESIS);
+        }
+        
+        if (_text[_pos] == '.') {
+            _pos++;
+            return Token(TokenType::PERIOD);
+        }
+        
+        if (_text[_pos] == ';') {
+            _pos++;
+            return Token(TokenType::SEMICOLON);
+        }
+        
+        if (_text[_pos] == '*') {
+            _pos++;
+            return Token(TokenType::STARKEY);
+        }
+        
+        if (_text[_pos] == '=') {
+            _pos++;
+            return Token(TokenType::EQ);
+        }
+        
+        if (_text[_pos] == '<') {
+            if (_text[_pos + 1] == '>') {
+                _pos = _pos + 2;
+                return Token(TokenType::NE);
+            } else if (_text[_pos + 1] == '=') {
+                _pos = _pos + 2;
+                return Token(TokenType::LE);
+            } else {
+                _pos++;
+                return Token(TokenType::LT);
+            }
+        }
+        
+        if (_text[_pos] == '>') {
+            if (_text[_pos + 1] == '=') {
+                _pos = _pos + 2;
+                return Token(TokenType::GE);
+            } else {
+                _pos++;
+                return Token(TokenType::GT);
+            }
         }
         
         return Token(TokenType::EOS);

@@ -37,7 +37,7 @@ namespace parser
         SELECT,
         IS,
         INT,
-        VARCHAR,
+        CHAR,
         DESC,
         REFERENCES,
         INDEX,
@@ -64,7 +64,6 @@ namespace parser
         GT,
         LE,
         GE,
-        EQUAL,
       
         ERROR
     };

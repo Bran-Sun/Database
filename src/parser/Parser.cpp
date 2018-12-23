@@ -7,12 +7,14 @@
 #include "../smmanager/DataInfo.h"
 
 namespace parser {
-    void Parser::parse(std::string &content) {
+    std::vector<std::shared_ptr<Action>> Parser::parse(const std::string &content) {
         _lexer.setText(content);
         _actions.clear();
         _lookahead = _lexer.next();
         
         _parseProgram();
+        
+        return _actions;
     }
     
     void Parser::_parseProgram() {
@@ -189,7 +191,6 @@ namespace parser {
         if (_lookahead.type == TokenType::EOS) {
             return;
         }
-        
         _parseStmt();
         _parseStmtList();
     }
@@ -203,6 +204,7 @@ namespace parser {
             
             if (_primaryNum != 1) {
                 //TODO
+                printf("need to have one primary key!\n");
             }
         } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS){
             //TODO
@@ -276,9 +278,9 @@ namespace parser {
         if (_lookahead.type == TokenType::NOT) {
             _parseLabel(TokenType::NOT);
             _parseLabel(TokenType::NUL);
-            return true;
-        } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS || _lookahead.type == TokenType::COMMA) {
             return false;
+        } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS || _lookahead.type == TokenType::COMMA) {
+            return true;
         } else {
             //TODO
             return false;
@@ -292,8 +294,8 @@ namespace parser {
             info.attrLength = _convertToInt(_parseVALUEDATA());
             _parseLabel(TokenType::RIGHTPARENTHESIS);
             info.attrType = INT;
-        } else if (_lookahead.type == TokenType::VARCHAR) {
-            _parseLabel(TokenType::VARCHAR);
+        } else if (_lookahead.type == TokenType::CHAR) {
+            _parseLabel(TokenType::CHAR);
             _parseLabel(TokenType::LEFTPARENTHESIS);
             info.attrLength = _convertToInt(_parseVALUEDATA());
             _parseLabel(TokenType::RIGHTPARENTHESIS);
@@ -316,6 +318,9 @@ namespace parser {
             std::string tem = _lookahead.value;
             _lookahead = _lexer.next();
             return tem;
+        } else {
+            //TODO
+            return "";
         }
     }
     
@@ -504,10 +509,12 @@ namespace parser {
             ans.value = d;
             ans.type = NUL;
         } else if (_lookahead.type == TokenType::IDENTIFIER) {
-            ans = _parseCol();
+            ans.col = _parseCol();
+            ans.isVal = false;
         } else {
             //TODO
         }
+        return ans;
     }
     
     void Parser::_parseSetClauseLists()
@@ -518,7 +525,7 @@ namespace parser {
     
     void Parser::_parseSetClause() {
         std::string name = _parseIdentifier();
-        _parseLabel(TokenType::EQUAL);
+        _parseLabel(TokenType::EQ);
         if (_lookahead.type == TokenType::VALUE_INT) {
             std::string d = _parseVALUEDATA();
             _setClause.emplace_back(name, d, INT);
@@ -530,7 +537,7 @@ namespace parser {
             _setClause.emplace_back(name, d, STRING);
         } else if (_lookahead.type == TokenType::NUL) {
             std::string d = _parseVALUEDATA();
-            _setClause.emplace_back(name, d, NULL);
+            _setClause.emplace_back(name, d, NUL);
         }
     }
     
