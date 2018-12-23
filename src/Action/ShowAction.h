@@ -12,7 +12,7 @@ class ShowDatabase : public Action
 public:
     ShowDatabase() {}
     virtual void execute(SystemManager &system) {
-    
+        system.showDb();
     }
     
     virtual void show() {
@@ -20,15 +20,17 @@ public:
     }
 };
 
-class ShowDatabases : public Action
+class ShowTables : public Action
 {
 public:
-    ShowDatabases() {}
+    ShowTables() {}
     
-    virtual void execute(SystemManager &system) {}
+    virtual void execute(SystemManager &system) {
+        system.showTable();
+    }
     
     virtual void show() {
-        printf("show databases!\n");
+        printf("show tables!\n");
     }
 };
 

@@ -52,14 +52,14 @@ namespace parser {
     
     void Parser::_parseShowStmt() {
         _parseLabel(TokenType::SHOW);
-        if (_lookahead.type == TokenType::DATABASE) {
-            //TODO
-            _parseLabel(TokenType::DATABASE);
-            _actions.push_back(std::make_shared<ShowDatabase>(ShowDatabase()));
-        } else if (_lookahead.type == TokenType::DATABASES) {
+        if (_lookahead.type == TokenType::DATABASES) {
             //TODO
             _parseLabel(TokenType::DATABASES);
-            _actions.push_back(std::make_shared<ShowDatabases>(ShowDatabases()));
+            _actions.push_back(std::make_shared<ShowDatabase>(ShowDatabase()));
+        } else if (_lookahead.type == TokenType::TABLES) {
+            //TODO
+            _parseLabel(TokenType::TABLES);
+            _actions.push_back(std::make_shared<ShowTables>(ShowTables()));
         }
     }
     

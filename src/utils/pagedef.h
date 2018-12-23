@@ -58,6 +58,9 @@
  */
 #define MAX_RECORD_PAGE 256
 #define RECORD_MAP 32
+
+#define ATTRNAME_MAX_LEN 255
+
 typedef unsigned int* BufType;
 typedef unsigned int uint;
 typedef unsigned short ushort;

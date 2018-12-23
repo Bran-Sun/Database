@@ -11,7 +11,9 @@ class DropDatabase : public Action
 {
 public:
     DropDatabase(std::string dbName): _dbName(dbName) {}
-    void execute(SystemManager &system) {}
+    void execute(SystemManager &system) {
+        system.destroyDb(_dbName);
+    }
     void show() {
         printf("drop database %s\n", _dbName.c_str());
     }
@@ -23,7 +25,9 @@ class DropTable : public Action
 {
 public:
     DropTable(std::string tableName): _tableName(tableName) {}
-    void execute(SystemManager &system) {}
+    void execute(SystemManager &system) {
+        system.destroyTable(_tableName);
+    }
     void show() {
         printf("drop table %s\n", _tableName.c_str());
     }
@@ -35,7 +39,9 @@ class DropIndex : public Action
 {
 public:
     DropIndex(std::string tableName, std::string indexName): _tableName(tableName), _indexName(indexName) {}
-    void execute(SystemManager &system) {}
+    void execute(SystemManager &system) {
+        system.destroyIndex(_tableName, _indexName);
+    }
     void show() {
         printf("drop index %s in table %s\n", _indexName.c_str(), _tableName.c_str());
     }

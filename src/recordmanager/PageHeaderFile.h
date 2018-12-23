@@ -9,10 +9,13 @@
 
 struct AttrInfoRead
 {
-    char attrName[256];
+    char attrName[ATTRNAME_MAX_LEN + 1];
+    char foreignTb[TABLE_NAME_MAX_LENGTH + 1];
+    char foreignIndex[ATTRNAME_MAX_LEN + 1];
+    
     int attrLength;
     AttrType attrType;
-    bool isNull, isIndex;
+    bool isNull, isIndex, isPrimary, isForeign;
 };
 
 struct PageHeaderFile

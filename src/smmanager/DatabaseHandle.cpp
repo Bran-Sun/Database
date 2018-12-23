@@ -101,16 +101,55 @@ void DatabaseHandle::_modifyDBFile()
     _bpm->release(index);
 }
 
-int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo> attributes)
+bool DatabaseHandle::_checkAttrInfo(const std::vector<AttrInfo> &attributes)
 {
+    for (const auto &info: attributes) {
+        if (info.attrName.length() > ATTRNAME_MAX_LEN) {
+            return false;
+        }
+        
+        if (info.isForeign) {
+            if (_tableNames.find(info.foreignTb) == _tableNames.end()) {  //如果不存在这个表
+                return false;
+            }
+            
+            if (_tableHandles.find(info.foreignTb) == _tableHandles.end()) {    //打开这个表
+                _tableHandles.emplace(std::piecewise_construct,
+                                      std::forward_as_tuple(info.foreignTb),
+                                      std::forward_as_tuple(_dbName, info.foreignTb, _rm, _ix));
+            }
+            
+            AttrInfo p = _tableHandles.at(info.foreignTb).getPrimaryKey();
+            if (p.attrName != info.foreignIndex || p.attrType != info.attrType || p.attrLength != info.attrLength) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo> &attributes)
+{
+    //first process the attributions
+    for (auto &at: attributes) {
+        if (at.isPrimary || at.isForeign) {
+            at.isIndex = true;
+        }
+    }
+    
     if (!_open) {
-        printf("dbHandle: database bot open!\n");
+        printf("dbHandle: table bot open!\n");
         return -1;
     }
     
     auto find = _tableNames.find(relName);
     if (find != _tableNames.end()) {
-        printf("dbHandle: database already exists!\n");
+        printf("dbHandle: table already exists!\n");
+        return -1;
+    }
+    
+    if (!_checkAttrInfo(attributes)) {
+        printf("dbHandle: attributes format error(maybe foreign key)\n");
         return -1;
     }
     
@@ -124,13 +163,19 @@ int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo
 
 int DatabaseHandle::dropTable(const std::string &relName)
 {
+    if (!_open) {
+        printf("database not open!\n");
+        return -1;
+    }
+    
     auto find = _tableNames.find(relName);
     if (find == _tableNames.end()) {
-        printf("dbHandle: database not exists!\n");
+        printf("dbHandle: table not exists!\n");
         return -1;
     }
     
     _tableHandles.at(relName).dropTable();
+    _tableHandles.erase(relName);
     _tableNames.erase(relName);
     _modifyDbf = true;
     return 0;
@@ -138,9 +183,14 @@ int DatabaseHandle::dropTable(const std::string &relName)
 
 int DatabaseHandle::createIndex(const std::string &relName, const std::string &attrName)
 {
+    if (!_open) {
+        printf("dbHandle: database not open\n");
+        return -1;
+    }
+    
     auto find = _tableNames.find(relName);
     if (find == _tableNames.end()) {
-        printf("dbHandle: database not exists!\n");
+        printf("dbHandle: table not exists!\n");
         return -1;
     }
     

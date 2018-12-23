@@ -11,7 +11,9 @@ class UseDatabase: public Action
 {
 public:
     UseDatabase(std::string dbName): _dbName(dbName) {}
-    void execute(SystemManager &system) {}
+    void execute(SystemManager &system) {
+        system.useDb(_dbName);
+    }
     
     void show() {
         printf("use database %s\n", _dbName.c_str());

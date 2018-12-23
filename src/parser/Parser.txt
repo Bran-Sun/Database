@@ -9,10 +9,10 @@
          | <tbStmt>’;’      //done
          | <idxStmt>’;’     //done
 
-<showStmt> := SHOW DATABASES    //done
-            | SHOW TABLES   //done
+<showStmt> := SHOW DATABASES    //done  //ok
+            | SHOW TABLES   //done  //ok
 
-<createStmt> := CREATE DATABASE <dbName>    //done
+<createStmt> := CREATE DATABASE <dbName>    //done  //ok
             | CREATE TABLE <tbName> '(' <fieldList> ')' //done
             | CREATE INDEX <tbName> '(' IDENTIFIER(colName) ')' //done
 
@@ -21,7 +21,7 @@
             | DROP INDEX <tbName> '('<colName>')'   //done
 
 
-<useStmt>  := USE <dbName>
+<useStmt>  := USE <dbName> //ok
 
 <tbStmt>  := DESC <tbName>
            | INSERT INTO <tbName> VALUES <valueLists>

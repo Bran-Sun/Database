@@ -11,6 +11,7 @@
 #include "../utils/pagedef.h"
 #include "PageHeaderFile.h"
 #include "../smmanager/DataInfo.h"
+#include "RMutils.h"
 
 class RM_Manager
 {

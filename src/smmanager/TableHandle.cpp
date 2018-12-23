@@ -19,6 +19,8 @@ TableHandle::TableHandle(const std::string &dbName, const std::string &relName, 
     _rm->openFile(_dbName + "/" + _tableName, _rmHandle);
     _attributions = _rmHandle.getAttrInfo();
     
+    _getPrimaryKey();
+    
     _openIndex();
     _open = true;
 }
@@ -32,10 +34,21 @@ TableHandle::TableHandle(const std::string &dbName, const std::string &relName, 
     _ix = ix;
     
     _attributions  = attributes;
-    _rm->createFile(_dbName + "/" + _tableName, _attributions); //create
+    _getPrimaryKey();
+    
+    _rm->createFile(_dbName + "/" + _tableName, _attributions); //create record table
+    
+    for (int i = 0; i < _attributions.size(); i++) {
+        if (_attributions[i].isIndex) {
+            _ix->createIndex(_dbName + "/" + _tableName, i, _attributions[i].attrType, _attributions[i].attrLength);
+            _ixHandles.emplace(std::piecewise_construct,
+                               std::forward_as_tuple(_attributions[i].attrName),
+                               std::forward_as_tuple());
+            _ix->openIndex(_dbName + "/" + _tableName, i, _ixHandles.at(_attributions[i].attrName));
+        }
+    }
     
     _rm->openFile(_dbName + "/" + _tableName, _rmHandle);
-    //index is empry!
     
     _open = true;
 }
@@ -102,6 +115,15 @@ int TableHandle::dropIndex(const std::string &attrName)
         if (_attributions[indexNo].attrName == attrName) {
             break;
         }
+    if (indexNo >= _attributions.size()) {
+        printf("no such index\n");
+        return -1;
+    }
+    
+    if (_attributions[indexNo].isPrimary || _attributions[indexNo].isForeign) {
+        printf("cannot drop such index\n");
+        return -1;
+    }
     
     _ix->closeIndex(_ixHandles.at(attrName));
     _ix->destroyIndex(_dbName + "/" + _tableName, indexNo);
@@ -135,7 +157,17 @@ void TableHandle::_openIndex()
             _ixHandles.emplace(std::piecewise_construct,
                                std::forward_as_tuple(_attributions[i].attrName),
                                std::forward_as_tuple());
-            _ix->openIndex(_tableName.c_str(), i, _ixHandles.at(_attributions[i].attrName));
+            _ix->openIndex(_dbName + "/" + _tableName, i, _ixHandles.at(_attributions[i].attrName));
+        }
+    }
+}
+
+void TableHandle::_getPrimaryKey()
+{
+    for (auto &attr: _attributions) {
+        if (attr.isPrimary) {
+            _primaryKey = attr;
+            return;
         }
     }
 }

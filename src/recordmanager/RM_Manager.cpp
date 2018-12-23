@@ -16,11 +16,12 @@ int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> at
 {
     printf("rm_manager: creating record file %s ...\n", filename.c_str());
     
+    //recordSize: reference count(int), nullbit(int), attributions
     int recordSize = 0;
     for (int i = 0; i < attributes.size(); i++) {
         recordSize += attributes[i].attrLength;
     }
-    recordSize += 4;    //bitmap
+    recordSize += RECORD_HEAD * 4;    //reference count + nullbit
     
     if (recordSize > PAGE_SIZE) {
         printf("creating file failed! record size larger than page size\n");
@@ -51,10 +52,14 @@ int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> at
     header->emptyPageHead = 0;
     for (int i = 0; i < attributes.size(); i++) {
         memcpy(header->attributions[i].attrName, attributes[i].attrName.c_str(), attributes[i].attrName.size() + 1);
+        memcpy(header->attributions[i].foreignTb, attributes[i].foreignTb.c_str(), attributes[i].foreignTb.size() + 1);
+        memcpy(header->attributions[i].foreignIndex, attributes[i].foreignIndex.c_str(), attributes[i].foreignIndex.size() + 1);
         header->attributions[i].attrLength = attributes[i].attrLength;
         header->attributions[i].attrType = attributes[i].attrType;
         header->attributions[i].isNull = attributes[i].isNull;
         header->attributions[i].isIndex = attributes[i].isIndex;
+        header->attributions[i].isPrimary = attributes[i].isPrimary;
+        header->attributions[i].isForeign = attributes[i].isForeign;
     }
     
     _bpm->markDirty(index);

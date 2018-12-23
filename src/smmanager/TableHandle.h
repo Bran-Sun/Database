@@ -27,11 +27,15 @@ public:
     int dropIndex(const std::string &attrName);
     int close();
     
+    AttrInfo getPrimaryKey() const { return _primaryKey; }
+    
 private:
     void _openIndex();
+    void _getPrimaryKey();
     
 private:
     bool _open;
+    AttrInfo _primaryKey;
     std::string _tableName, _dbName;
     std::vector<AttrInfo> _attributions;
     std::shared_ptr<RM_Manager> _rm;

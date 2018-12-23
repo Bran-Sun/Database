@@ -68,16 +68,6 @@ int SM_Manager::closeDb(DatabaseHandle &handle)
     return 0;
 }
 
-int SM_Manager::getDatabases(std::vector<std::string> &databaseName)
-{
-    databaseName.clear();
-    
-    for (auto iter = _dbs.begin(); iter != _dbs.end(); iter++) {
-        databaseName.emplace_back(*iter);
-    }
-    return 0;
-}
-
 int SM_Manager::_initDbManager()
 {
     auto curDir = opendir(".");
@@ -103,10 +93,6 @@ int SM_Manager::_initDbManager()
 
 int SM_Manager::destroyDb(const std::string &filename)
 {
-    if (!_open) {
-        printf("sm_error: no database is open!\n");
-    }
-    
     if (_dbs.count(filename) == 0) {
         printf("sm_error: database is not exist!\n");
         return -1;

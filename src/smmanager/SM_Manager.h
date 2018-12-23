@@ -23,7 +23,9 @@ public:
     int closeDb(DatabaseHandle &handle);
     int destroyDb(const std::string &filename);
     
-    int getDatabases(std::vector<std::string> &databaseName);
+    std::set<std::string> getDatabaseName() const {
+        return _dbs;
+    }
     
 private:
     int _initDbManager();

@@ -31,7 +31,7 @@ public:
     DatabaseHandle();
     
     int open(const std::string &filename, std::shared_ptr<FileManager> fm, std::shared_ptr<BufPageManager> bpm);
-    int createTable(const std::string &relName, std::vector<AttrInfo> attributes);
+    int createTable(const std::string &relName, std::vector<AttrInfo> &attributes);
     int dropTable(const std::string &relName);
     
     int createIndex(const std::string &relName, const std::string &attrName);
@@ -39,12 +39,18 @@ public:
     
     //int load(std::string &relName, std::string &filename);
     
+    bool isOpen() const { return _open; }
+    
     int close();
+    std::string getName() { if (_open) return _dbName; else return ""; }
+    
+    std::set<std::string> getTableInfo() { return _tableNames; }
     
     ~DatabaseHandle();
     
 public:
     void _modifyDBFile();
+    bool _checkAttrInfo(const std::vector<AttrInfo> &attributes);
 
 private:
     bool _modifyDbf;

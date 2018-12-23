@@ -17,13 +17,15 @@ struct AttrInfo {
     
     AttrInfo(AttrInfoRead r) {
         this->attrName = std::string(r.attrName);
+        this->foreignTb = std::string(r.foreignTb);
+        this->foreignIndex = std::string(r.foreignIndex);
         this->attrLength  = r.attrLength;
         this->attrType = r.attrType;
+        
         this->isNull = r.isNull;
         this->isIndex = r.isIndex;
-        //TODO
-        this->isPrimary = false;
-        this->isForeign = false;
+        this->isPrimary = r.isPrimary;
+        this->isForeign = r.isForeign;
     }
     
     AttrInfo(std::string name, int length, AttrType type) {
