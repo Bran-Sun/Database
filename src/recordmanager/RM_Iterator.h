@@ -12,7 +12,7 @@
 class RM_Iterator
 {
 private:
-    RM_FileHandle *_handle;
+    RM_FileHandle &_handle;
     RID _rid;
     AttrType _attrType;
     int _attrLength;
@@ -24,14 +24,8 @@ private:
     bool _satisfy(const RM_Record &record);
     
 public:
-    RM_Iterator() {
-        _handle = nullptr;
-        _value = nullptr;
-        _rid.setRID(0, 0);
-    }
     
-    void initIterator(RM_FileHandle *handle, AttrType type, int attrLength, int attrOffset, ComOp comOp, void *value) {
-        _handle = handle;
+    RM_Iterator(RM_FileHandle &handle, AttrType type, int attrLength, int attrOffset, ComOp comOp, void *value): _handle(handle) {
         _attrType = type;
         _attrLength = attrLength;
         _attrOffset = attrOffset;

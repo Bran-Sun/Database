@@ -40,19 +40,23 @@ void SystemManager::destroyDb(std::string dbName)
     _sm_manager.destroyDb(dbName);
 }
 
-void SystemManager::descTable(const std::string tbName)
+void SystemManager::descTable(const std::string &tbName)
 {
-
+    std::vector<AttrInfo> attrs = _currentDb.getRecordInfo(tbName);
+    printf("AttrName\t attrLength\t\n");
+    for (auto &attr: attrs) {
+        printf("%s\t%d\n", attr.attrName.c_str(), attr.attrLength);
+    }
 }
 
 void SystemManager::insert(const std::string tbName, const std::vector<std::vector<DataAttr>> &data)
 {
-
+    _currentDb.insert(tbName, data);
 }
 
-void SystemManager::del(const std::string tbName, const std::vector<WhereClause> &whereClause)
+void SystemManager::del(const std::string tbName, std::vector<WhereClause> &whereClause)
 {
-
+    _currentDb.del(tbName, whereClause);
 }
 
 void SystemManager::update(const std::string tbName, const std::vector<WhereClause> &whereClause,

@@ -7,6 +7,7 @@
 
 #include "../recordmanager/RM_Manager.h"
 #include "../recordmanager/RM_FileHandle.h"
+#include "../recordmanager/RM_Iterator.h"
 #include "../ixmanager/IX_Manager.h"
 #include "../ixmanager/IX_IndexHandle.h"
 #include "DataInfo.h"
@@ -28,10 +29,16 @@ public:
     int close();
     
     AttrInfo getPrimaryKey() const { return _primaryKey; }
+    std::vector<AttrInfo> getAttributions() const { return _attributions; }
+    
+    void insert(const std::vector<std::vector<DataAttr>> &data);
+    void del(std::vector<WhereClause> &whereClause);
     
 private:
     void _openIndex();
     void _getPrimaryKey();
+    bool _checkWhereClause(RM_Record &record, std::vector<WhereClause> &whereClause);
+    bool _checkWhereValid(std::vector<WhereClause> &whereClause);
     
 private:
     bool _open;

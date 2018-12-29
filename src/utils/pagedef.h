@@ -91,6 +91,6 @@ enum ComOp {
     NO_OP
 };
 
-int TypeComp(void *p1, void *p2, AttrType type, int attrlength);
-bool TypeCompWithComOp(void *p1, void *p2, AttrType attrType, ComOp op, int attrlength);
+int TypeComp(const void *p1, const void *p2, AttrType type, int attrlength);
+bool TypeCompWithComOp(const void *p1, const void *p2, AttrType attrType, ComOp op, int attrlength);
 #endif

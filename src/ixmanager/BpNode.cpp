@@ -13,7 +13,7 @@ BpNode::BpNode(int pageID, BufType bt, int attrlength, bool root)
     _lightLoad(bt, attrlength);
 }
 
-int BpNode::findIndex(void *pData, int &index, AttrType attrType, int attrlength)
+int BpNode::findIndex(const void *pData, int &index, AttrType attrType, int attrlength)
 {
     //printf("data: %d\n", *(int*)pData);
     //printf("pageID: %d\n", _pageID);
@@ -66,7 +66,7 @@ BpNode::BpNode(std::shared_ptr<BpNode> parent, int pageID, BufType bt, int attrl
     _lightLoad(bt, attrlength);
 }
 
-int BpNode::compKey(void *pData, AttrType type, int attrlength, int index)
+int BpNode::compKey(const void *pData, AttrType type, int attrlength, int index)
 {
     if  (_terminal) {
         return TypeComp(pData, (char*)(_buf + IX_NODE_H + _keyNum * 2) + attrlength * index, type, attrlength);

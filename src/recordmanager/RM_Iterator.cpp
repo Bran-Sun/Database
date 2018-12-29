@@ -4,11 +4,12 @@
 
 #include "RM_Iterator.h"
 
+//结束时返回-1
 int RM_Iterator::getNextRecord(RM_Record &record) {
-    int result = _handle->getNextRecord(_rid, record);
+    int result = _handle.getNextRecord(_rid, record);
     
     while ((result != -1) && !_satisfy(record)) {
-        result = _handle->getNextRecord(_rid, record);
+        result = _handle.getNextRecord(_rid, record);
     }
     
     return result;
@@ -17,9 +18,10 @@ int RM_Iterator::getNextRecord(RM_Record &record) {
 bool RM_Iterator::_satisfy(const RM_Record &record)
 {
     if (_value == nullptr) return true;
-    char *data = nullptr;
-    record.getData(data);
+    std::string data;
+    data = record.getData();
     
-    char *compData = data + _attrOffset;
+    const char *compData;
+    compData = data.c_str() + _attrOffset;
     return TypeCompWithComOp((void*)compData, _value, _attrType, _comOp, _attrLength);
 }

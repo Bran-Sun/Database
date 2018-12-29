@@ -12,7 +12,7 @@ int IX_IndexHandle::insertEntry(void *pData, const RID &rid)
     return 0;
 }
 
-int IX_IndexHandle::deleteEntry(void *pData, const RID &rid)
+int IX_IndexHandle::deleteEntry(const void *pData, const RID &rid)
 {
     std::shared_ptr<BpNode> node = _findKey(pData);
     
@@ -159,7 +159,7 @@ int IX_IndexHandle::_insert(std::shared_ptr<BpNode> node, void *pData, const RID
     return 0;
 }
 
-int IX_IndexHandle::_delete(std::shared_ptr<BpNode> node, void *pData, const RID &rid)
+int IX_IndexHandle::_delete(std::shared_ptr<BpNode> node, const void *pData, const RID &rid)
 {
     int nodeIndex, result;
     result = node->findIndex(pData, nodeIndex, _attrType, _attrlength);
@@ -204,7 +204,7 @@ int IX_IndexHandle::_delete(std::shared_ptr<BpNode> node, void *pData, const RID
     return 0;
 }
 
-std::shared_ptr<BpNode> IX_IndexHandle::_findKey(void *pData)
+std::shared_ptr<BpNode> IX_IndexHandle::_findKey(const void *pData)
 {
     std::shared_ptr<BpNode> cur = _root;
     int next;

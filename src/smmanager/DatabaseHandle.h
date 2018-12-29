@@ -45,6 +45,9 @@ public:
     std::string getName() { if (_open) return _dbName; else return ""; }
     
     std::set<std::string> getTableInfo() { return _tableNames; }
+    std::vector<AttrInfo> getRecordInfo(const std::string &tbName);
+    void insert(const std::string &tbName, const std::vector<std::vector<DataAttr>> &data);
+    void del(const string &tbName, std::vector<WhereClause> &whereClause);
     
     ~DatabaseHandle();
     

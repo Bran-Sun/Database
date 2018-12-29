@@ -5,7 +5,7 @@
 #include "pagedef.h"
 #include <string>
 
-int TypeComp(void *p1, void *p2, AttrType type, int attrlength) {
+int TypeComp(const void *p1, const void *p2, AttrType type, int attrlength) {
     char *a, *b;
     
     switch (type) {
@@ -30,7 +30,7 @@ int TypeComp(void *p1, void *p2, AttrType type, int attrlength) {
     }
 }
 
-bool compInt(void *p1, void* p2, ComOp op, int attrlength)
+bool compInt(const void *p1, const void *p2, ComOp op, int attrlength)
 {
     int value = *(int*)p1;
     int compData = *(int*)p2;
@@ -53,7 +53,7 @@ bool compInt(void *p1, void* p2, ComOp op, int attrlength)
     }
 }
 
-bool compBool(void *p1, void* p2, ComOp op, int attrlength)
+bool compBool(const void *p1, const void *p2, ComOp op, int attrlength)
 {
     bool value = *(bool*)p1;
     bool compData = *(bool*)p2;
@@ -67,7 +67,7 @@ bool compBool(void *p1, void* p2, ComOp op, int attrlength)
     }
 }
 
-bool compFloat(void *p1, void* p2, ComOp op, int attrlength)
+bool compFloat(const void *p1, const void *p2, ComOp op, int attrlength)
 {
     float value = *(float*)p1;
     float compData = *(float*)p2;
@@ -90,7 +90,7 @@ bool compFloat(void *p1, void* p2, ComOp op, int attrlength)
     return false;
 }
 
-bool compString(void *p1, void* p2, ComOp op, int attrlength)
+bool compString(const void *p1, const void *p2, ComOp op, int attrlength)
 {
     std::string value((char*)p1, attrlength);
     std::string compData((char*)p2, attrlength);
@@ -114,7 +114,7 @@ bool compString(void *p1, void* p2, ComOp op, int attrlength)
     return false;
 }
 
-bool compChar(void *p1, void* p2, ComOp op, int attrlength)
+bool compChar(const void *p1, const void *p2, ComOp op, int attrlength)
 {
     char value = *(char*)p1;
     char compData = *(char*)p2;
@@ -136,7 +136,7 @@ bool compChar(void *p1, void* p2, ComOp op, int attrlength)
     }
 }
 
-bool TypeCompWithComOp(void *p1, void *p2, AttrType attrType, ComOp op, int attrlength)
+bool TypeCompWithComOp(const void *p1, const void *p2, AttrType attrType, ComOp op, int attrlength)
 {
     switch(attrType) {
         case INT:

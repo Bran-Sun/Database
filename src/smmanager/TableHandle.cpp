@@ -2,6 +2,7 @@
 // Created by 孙桢波 on 2018/12/6.
 //
 
+#include <sstream>
 #include "TableHandle.h"
 
 TableHandle::TableHandle()
@@ -172,3 +173,125 @@ void TableHandle::_getPrimaryKey()
     }
 }
 
+void TableHandle::insert(const std::vector<std::vector<DataAttr>> &data)
+{
+    RID rid;
+    
+    std::vector<RID> rids;
+    
+    int recordSize = _rmHandle.getRecordSize();
+    
+    char *buf = (char*)malloc(recordSize * sizeof(char));
+    int *head = (int*)buf;
+    
+    for (auto &record: data) {  //insert Record
+        memset(buf, 0, (size_t)recordSize);
+        int point = RECORD_HEAD * 4;
+        
+        for (int i = 0; i < record.size(); i++) {
+            if (record[i].isNull) {
+                if (_attributions[i].isNull) {
+                    head[RECORD_NULLBIT] |= (1 << i);
+                } else {
+                    printf("this attributions can't insert!\n");
+                }
+            } else {
+                if (_attributions.size() < record[i].data.size()) {
+                    printf("this data is too long!\n");
+                } else {
+                    strncpy(buf + point, record[i].data.c_str(), record[i].data.size());
+                }
+            }
+            point += _attributions[i].attrLength;
+        }
+        
+        _rmHandle.insertRecord(buf, rid);
+        rids.push_back(rid);
+    }
+    
+    for (int i = 0; i < _attributions.size(); i++) {
+        if (_attributions[i].isIndex) {
+            for (int j = 0; j < data.size(); j++) {
+                memset(buf, 0, (size_t)_attributions[i].attrLength);
+                strncpy(buf, data[j][i].data.c_str(), data[j][i].data.size());
+                _ixHandles.at(_attributions[i].attrName).insertEntry(buf, rids[j]);
+            }
+        }
+    }
+}
+
+
+void TableHandle::del(std::vector<WhereClause> &whereClause) {
+    _checkWhereValid(whereClause);
+    
+    std::vector<RM_Record> records;
+    int recordSize = _rmHandle.getRecordSize();
+    char *buf = (char*)malloc(recordSize * sizeof(char));
+    
+    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
+    RM_Record recordIn;
+    
+    while (iter.getNextRecord(recordIn) != -1) {
+        if (_checkWhereClause(recordIn, whereClause)) {
+            records.push_back(recordIn);
+        }
+    }
+    
+    for (auto &record: records) {
+        RID rid = record.getRID();
+        _rmHandle.deleteRecord(rid);
+    }
+    
+    for (auto &record: records)
+    {
+        const char *head = record._data.c_str();
+        RID rid = record.getRID();
+        int offset = 0;
+        for ( int i = 0; i < _attributions.size(); i++ )
+        {
+            if ( _attributions[i].isIndex)
+            {
+                _ixHandles.at(_attributions[i].attrName).deleteEntry(head + RECORD_HEAD * 4 + offset, rid);
+            }
+            offset += _attributions[i].attrLength;
+        }
+    }
+}
+
+
+bool TableHandle::_checkWhereClause(RM_Record &record, std::vector<WhereClause> &whereClause)
+{
+    std::string data = record.getData();
+    const char *head = data.c_str();
+    for (auto &clause: whereClause) {
+        int index, offset = 0;
+        for (index = 0; index < _attributions.size(); index++) {
+            if (clause.left.col.indexName == _attributions[index].attrName) break;
+            else offset += _attributions[index].attrLength;
+        }
+        
+        if (clause.right.isVal) {
+            if (clause.right.useNull) {
+                bool isNull = (((((int*)head)[RECORD_NULLBIT] >> index) & 1) == 1);
+                if (isNull != clause.right.isNull) return false;
+            } else {
+                bool result = TypeCompWithComOp(head + RECORD_HEAD * 4 + offset, clause.right.value.c_str(), clause.right.type, clause.comOp, _attributions[index].attrLength);
+                if (!result) return false;
+            }
+        } else {
+            int index2, offset2 = 0;
+            for (index2 = 0; index2 < _attributions.size(); index2++) {
+                if (clause.right.col.indexName == _attributions[index2].attrName) break;
+                else offset2 += _attributions[index2].attrLength;
+            }
+            bool result = TypeCompWithComOp(head + RECORD_HEAD * 4 + offset, head + RECORD_HEAD * 4 + offset2, _attributions[index].attrType, clause.comOp, _attributions[index].attrLength);
+            if (!result) return false;
+        }
+    }
+    return true;
+}
+
+bool TableHandle::_checkWhereValid(std::vector<WhereClause> &whereClause)
+{
+    return true;
+}

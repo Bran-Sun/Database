@@ -7,23 +7,22 @@
 
 #include "RID.h"
 #include <cstdlib>
-#include <cstring>
+#include <string>
 
 class RM_Record
 {
-private:
-    char *_data;
+public:
+    std::string _data;
     int _recordSize;
     int _pageID, _slotID;
     
 public:
     RM_Record() {
-        _data = nullptr;
         _recordSize = 0;
     }
     
-    void getData(char *&data) const{
-        data = _data;
+    std::string getData() const{
+        return _data;
     }
     
     void getRid(RID &rid) const {
@@ -31,12 +30,7 @@ public:
     }
     
     void setData(const char *data, int recordSize, const RID *rid) {
-        if (_data != nullptr) {
-            free(_data);
-        }
-        
-        _data = (char*)malloc(sizeof(char) * recordSize);
-        memcpy(_data, data, (size_t)recordSize);
+        _data = std::string(data, (unsigned long)recordSize);
         _recordSize = recordSize;
         rid->getRID(_pageID, _slotID);
     }
@@ -46,13 +40,12 @@ public:
         slotID = _slotID;
     }
     
-    void setData(const char *data, int recordSize, const int pageID, const int slotID) {
-        if (_data != nullptr) {
-            free(_data);
-        }
+    RID getRID() const {
+        return RID(_pageID, _slotID);
+    }
     
-        _data = (char*)malloc(sizeof(char) * recordSize);
-        memcpy(_data, data, (size_t)recordSize);
+    void setData(const char *data, int recordSize, const int pageID, const int slotID) {
+        _data = std::string(data, (unsigned long)recordSize);
         _recordSize = recordSize;
         _pageID = pageID;
         _slotID = slotID;

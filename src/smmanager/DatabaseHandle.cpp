@@ -245,3 +245,55 @@ DatabaseHandle::~DatabaseHandle()
 {
     if (_open) close();
 }
+
+std::vector<AttrInfo> DatabaseHandle::getRecordInfo(const std::string &tbName)
+{
+    auto find = _tableNames.find(tbName);
+    if (find == _tableNames.end()) {
+        printf("dbHandle: table not exists!\n");
+        return std::vector<AttrInfo>();
+    }
+    
+    auto openFind = _tableHandles.find(tbName);
+    if (openFind == _tableHandles.end()) {
+        _tableHandles.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(tbName),
+                              std::forward_as_tuple(_dbName, tbName, _rm, _ix));
+    }
+    
+    return _tableHandles.at(tbName).getAttributions();
+}
+
+void DatabaseHandle::insert(const std::string &tbName, const std::vector<std::vector<DataAttr>> &data) {
+    auto find = _tableNames.find(tbName);
+    if (find == _tableNames.end()) {
+        printf("dbHandle: table not exists!\n");
+        return;
+    }
+    
+    auto openFind = _tableHandles.find(tbName);
+    if (openFind == _tableHandles.end()) {
+        _tableHandles.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(tbName),
+                              std::forward_as_tuple(_dbName, tbName, _rm, _ix));
+    }
+    
+    _tableHandles.at(tbName).insert(data);
+}
+
+void DatabaseHandle::del(const std::string &tbName, std::vector<WhereClause> &whereClause) {
+    auto find = _tableNames.find(tbName);
+    if (find == _tableNames.end()) {
+        printf("dbHandle: table not exists!\n");
+        return;
+    }
+    
+    auto openFind = _tableHandles.find(tbName);
+    if (openFind == _tableHandles.end()) {
+        _tableHandles.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(tbName),
+                              std::forward_as_tuple(_dbName, tbName, _rm, _ix));
+    }
+    
+    _tableHandles.at(tbName).del(whereClause);
+}

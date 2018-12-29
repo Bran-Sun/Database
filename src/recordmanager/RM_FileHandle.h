@@ -62,6 +62,7 @@ public:
     
     void addIndex(int indexNo) { _attributions[indexNo].isIndex = true; _isHeaderModify = true; }
     void dropIndex(int indexNo) { _attributions[indexNo].isIndex = false; _isHeaderModify = true; }
+    int getRecordSize() const { return _recordSize; }
     
 private:
     void _forcePage(int index);

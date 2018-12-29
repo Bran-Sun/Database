@@ -34,7 +34,7 @@ public:
     bool isTerminal() const { return _terminal; }
     bool isLeaf() const { return _leaf; }
     bool isRoot() const { return _root; }
-    int findIndex(void *pData, int &index, AttrType attrType, int attrlength);
+    int findIndex(const void *pData, int &index, AttrType attrType, int attrlength);
     
     void setTerminal(bool terminal) { _terminal = terminal; }
     void setLeaf(bool leaf) { _leaf = leaf; }
@@ -43,7 +43,7 @@ public:
     int getPrePage() const { return _prePage; }
     int getNextPage() const { return _nextPage; }
     int getKeyNum() const { return _keyNum; }
-    int compKey(void *pData, AttrType type, int attrlength, int index);
+    int compKey(const void *pData, AttrType type, int attrlength, int index);
     RID getRID(int index) const { return RID(_buf[IX_NODE_H + index * 2], _buf[IX_NODE_H + index * 2 + 1]); }
     void insertTerminalKV(void* pData, int attrlength, const RID &rid);
     std::shared_ptr<BpNode> split(int pageID);

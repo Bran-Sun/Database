@@ -18,17 +18,17 @@ public:
     void createIndex(const std::string &tbName, const std::string &indexName) { _currentDb.createIndex(tbName, indexName); };  //ok
     
     void destroyDb(std::string dbName); //ok
-    void destroyTable(const std::string tbName) { _currentDb.dropTable(tbName); } //ok
-    void destroyIndex(const std::string tbName, const std::string indexName) { _currentDb.dropIndex(tbName, indexName); } //ok
+    void destroyTable(const std::string &tbName) { _currentDb.dropTable(tbName); } //ok
+    void destroyIndex(const std::string &tbName, const std::string &indexName) { _currentDb.dropIndex(tbName, indexName); } //ok
     
     void showDb(); //ok
     void showTable();   //ok
     
-    void useDb(std::string dbName) { _sm_manager.openDb(dbName, _currentDb); } //ok
+    void useDb(std::string &dbName) { _sm_manager.openDb(dbName, _currentDb); } //ok
     
-    void descTable(const std::string tbName);
+    void descTable(const std::string &tbName);
     void insert(const std::string tbName, const std::vector<std::vector<DataAttr>> &data);
-    void del(const std::string tbName, const std::vector<WhereClause> &whereClause);
+    void del(const std::string tbName, std::vector<WhereClause> &whereClause);
     void update(const std::string tbName, const std::vector<WhereClause> &whereClause, const std::vector<SetClause> &setClause);
     void select(const std::vector<std::string> &tbList, const std::vector<Col> &seletor, bool selectAll, const std::vector<WhereClause> whereClause);
     
