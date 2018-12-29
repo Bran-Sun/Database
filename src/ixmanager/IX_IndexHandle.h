@@ -30,7 +30,7 @@ public:
     int getFileID() const { return _fileID; }
     void setHeaderPage(IX_HeaderPage *header);
     
-    int insertEntry(void *pData, const RID &rid);
+    int insertEntry(const void *pData, const RID &rid);
     int deleteEntry(const void *pData, const RID &rid);
     int forcePages();
     AttrType getAttrType() const { return _attrType; }
@@ -41,9 +41,9 @@ public:
 private:
     void _forcePage(int index);
     std::shared_ptr<BpNode> _findKey(const void *pData);
-    int _insert(std::shared_ptr<BpNode> node, void *pData, const RID &rid);
+    int _insert(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);
     int _delete(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);
-    int _insertKey(std::shared_ptr<BpNode> node, void *pData, const RID &rid);
+    int _insertKey(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);
     int _insertInternalKey(std::shared_ptr<BpNode> parent, std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc);
     int _getEmptyPage();
     int _deleteKey(std::shared_ptr<BpNode> node);

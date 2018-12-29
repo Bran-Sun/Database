@@ -4,7 +4,7 @@
 
 #include "IX_IndexHandle.h"
 
-int IX_IndexHandle::insertEntry(void *pData, const RID &rid)
+int IX_IndexHandle::insertEntry(const void *pData, const RID &rid)
 {
     std::shared_ptr<BpNode> node = _findKey(pData); //find most right node
     
@@ -111,7 +111,7 @@ void IX_IndexHandle::_forcePage(int index)
     if (fileID == _fileID) _bpm->writeBack(index, IX_PAGE_SIZE);
 }
 
-int IX_IndexHandle::_insert(std::shared_ptr<BpNode> node, void *pData, const RID &rid)
+int IX_IndexHandle::_insert(std::shared_ptr<BpNode> node, const void *pData, const RID &rid)
 {
     int nodeIndex, result;
     result = node->findIndex(pData, nodeIndex, _attrType, _attrlength);
@@ -222,7 +222,7 @@ std::shared_ptr<BpNode> IX_IndexHandle::_findKey(const void *pData)
     return cur;
 }
 
-int IX_IndexHandle::_insertKey(std::shared_ptr<BpNode> node, void *pData, const RID &rid)
+int IX_IndexHandle::_insertKey(std::shared_ptr<BpNode> node, const void *pData, const RID &rid)
 {
     node->insertTerminalKV(pData, _attrlength, rid);
     

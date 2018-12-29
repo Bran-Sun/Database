@@ -75,7 +75,7 @@ int BpNode::compKey(const void *pData, AttrType type, int attrlength, int index)
     }
 }
 
-void BpNode::insertTerminalKV(void *pData, int attrlength, const RID &rid)
+void BpNode::insertTerminalKV(const void *pData, int attrlength, const RID &rid)
 {
     if (_keys.size() == 0)
     {

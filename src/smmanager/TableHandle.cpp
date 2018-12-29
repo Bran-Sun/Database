@@ -295,3 +295,92 @@ bool TableHandle::_checkWhereValid(std::vector<WhereClause> &whereClause)
 {
     return true;
 }
+
+void TableHandle::update(std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause)
+{
+    _checkWhereValid(whereClause);
+    _checkSetValid(setClause);
+    
+    std::vector<RM_Record> records;
+    int recordSize = _rmHandle.getRecordSize();
+    char *buf = (char*)malloc(recordSize * sizeof(char));
+    
+    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
+    RM_Record recordIn;
+    
+    while (iter.getNextRecord(recordIn) != -1) {
+        if (_checkWhereClause(recordIn, whereClause)) {
+            records.push_back(recordIn);
+        }
+    }
+    
+    for (auto &record: records) {
+        for (auto &clause: setClause) {
+            int offset = 0;
+            int index;
+            for (index = 0; index < _attributions.size(); index++) {
+                if (_attributions[index].attrName == clause.col) break;
+                else offset += _attributions[index].attrLength;
+            }
+            
+            if (_attributions[index].isIndex) {
+                _ixHandles.at(_attributions[index].attrName).deleteEntry(record._data.c_str() + offset, record.getRID());
+            }
+            record._data.replace(offset, _attributions[index].attrLength, clause.value);
+            if (_attributions[index].isIndex) {
+                _ixHandles.at(_attributions[index].attrName).insertEntry(record._data.c_str() + offset, record.getRID());
+            }
+        }
+        _rmHandle.updateRecord(record);
+    }
+}
+
+bool TableHandle::_checkSetValid(std::vector<SetClause> &setClause)
+{
+    return true;
+}
+
+void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause)
+{
+    std::vector<std::string> data;
+    
+    _checkWhereValid(whereClause);
+    
+    //prepare selector
+    std::vector<int> indexes;
+    std::vector<int> offsets;
+    for (auto &col: selector) {
+        int offset = 0;
+        for (int i = 0; i < _attributions.size(); i++) {
+            if (_attributions[i].attrName == col.indexName) {
+                indexes.push_back(i);
+                offsets.push_back(offset);
+                break;
+            } else {
+                offset += _attributions[i].attrLength;
+            }
+        }
+    }
+    
+    int recordSize = _rmHandle.getRecordSize();
+    char *buf = (char*)malloc(recordSize * sizeof(char));
+    
+    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
+    RM_Record recordIn;
+    
+    while (iter.getNextRecord(recordIn) != -1) {
+        if (_checkWhereClause(recordIn, whereClause)) {
+            if (selectAll) {
+                data.push_back(recordIn._data);
+            } else
+            {
+                std::string tem;
+                for ( int i = 0; i < indexes.size(); i++ )
+                {
+                    tem += recordIn._data.substr(offsets[i], _attributions[indexes[i]].attrLength);
+                }
+                data.push_back(tem);
+            }
+        }
+    }
+}

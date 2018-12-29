@@ -47,7 +47,9 @@ public:
     std::set<std::string> getTableInfo() { return _tableNames; }
     std::vector<AttrInfo> getRecordInfo(const std::string &tbName);
     void insert(const std::string &tbName, const std::vector<std::vector<DataAttr>> &data);
-    void del(const string &tbName, std::vector<WhereClause> &whereClause);
+    void del(const std::string &tbName, std::vector<WhereClause> &whereClause);
+    void update(const std::string &tbName, std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause);
+    void select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     
     ~DatabaseHandle();
     

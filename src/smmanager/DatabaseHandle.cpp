@@ -297,3 +297,46 @@ void DatabaseHandle::del(const std::string &tbName, std::vector<WhereClause> &wh
     
     _tableHandles.at(tbName).del(whereClause);
 }
+
+void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause) {
+    auto find = _tableNames.find(tbName);
+    if (find == _tableNames.end()) {
+        printf("dbHandle: table not exists!\n");
+        return;
+    }
+    
+    auto openFind = _tableHandles.find(tbName);
+    if (openFind == _tableHandles.end()) {
+        _tableHandles.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(tbName),
+                              std::forward_as_tuple(_dbName, tbName, _rm, _ix));
+    }
+    
+    _tableHandles.at(tbName).update(whereClause, setClause);
+}
+
+void DatabaseHandle::select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll,
+                            std::vector<WhereClause> &whereClause)
+{
+    for (auto &tbName: tbList)
+    {
+        auto find = _tableNames.find(tbName);
+        if ( find == _tableNames.end())
+        {
+            printf("dbHandle: table not exists!\n");
+            return;
+        }
+    
+        auto openFind = _tableHandles.find(tbName);
+        if ( openFind == _tableHandles.end())
+        {
+            _tableHandles.emplace(std::piecewise_construct,
+                                  std::forward_as_tuple(tbName),
+                                  std::forward_as_tuple(_dbName, tbName, _rm, _ix));
+        }
+    }
+    
+    if (tbList.size() == 1) {
+        _tableHandles.at(tbList[0]).selectSingle(selector, selectAll, whereClause);
+    }
+}

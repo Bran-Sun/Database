@@ -59,14 +59,14 @@ void SystemManager::del(const std::string tbName, std::vector<WhereClause> &wher
     _currentDb.del(tbName, whereClause);
 }
 
-void SystemManager::update(const std::string tbName, const std::vector<WhereClause> &whereClause,
-                           const std::vector<SetClause> &setClause)
+void SystemManager::update(const std::string tbName, std::vector<WhereClause> &whereClause,
+                            std::vector<SetClause> &setClause)
 {
-
+    _currentDb.update(tbName, whereClause, setClause);
 }
 
-void SystemManager::select(const std::vector<std::string> &tbList, const std::vector<Col> &seletor, bool selectAll,
-                           const std::vector<WhereClause> whereClause)
+void SystemManager::select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll,
+                           std::vector<WhereClause> &whereClause)
 {
-
+    _currentDb.select(tbList, selector, selectAll, whereClause);
 }

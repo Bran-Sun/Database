@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by 孙桢波 on 2018/11/23.
 //
@@ -45,12 +47,12 @@ public:
     int getKeyNum() const { return _keyNum; }
     int compKey(const void *pData, AttrType type, int attrlength, int index);
     RID getRID(int index) const { return RID(_buf[IX_NODE_H + index * 2], _buf[IX_NODE_H + index * 2 + 1]); }
-    void insertTerminalKV(void* pData, int attrlength, const RID &rid);
+    void insertTerminalKV(const void* pData, int attrlength, const RID &rid);
     std::shared_ptr<BpNode> split(int pageID);
     void write(BufType bt, int attrlength);
     int getPageID() const { return _pageID; }
     std::shared_ptr<BpNode> getParent() { return _parent; }
-    void setParent(std::shared_ptr<BpNode> parent) { _parent = parent; }
+    void setParent(std::shared_ptr<BpNode> parent) { _parent = std::move(parent); }
     void initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode>rc, int attrlength);
     void insertInternalKey(std::shared_ptr<BpNode> node, int attrlength);
     void deleteKey();

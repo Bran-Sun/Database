@@ -33,12 +33,15 @@ public:
     
     void insert(const std::vector<std::vector<DataAttr>> &data);
     void del(std::vector<WhereClause> &whereClause);
+    void update(std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause);
+    void selectSingle(std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     
 private:
     void _openIndex();
     void _getPrimaryKey();
     bool _checkWhereClause(RM_Record &record, std::vector<WhereClause> &whereClause);
     bool _checkWhereValid(std::vector<WhereClause> &whereClause);
+    bool _checkSetValid(std::vector<SetClause> &setClause);
     
 private:
     bool _open;

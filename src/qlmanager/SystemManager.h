@@ -29,8 +29,8 @@ public:
     void descTable(const std::string &tbName);
     void insert(const std::string tbName, const std::vector<std::vector<DataAttr>> &data);
     void del(const std::string tbName, std::vector<WhereClause> &whereClause);
-    void update(const std::string tbName, const std::vector<WhereClause> &whereClause, const std::vector<SetClause> &setClause);
-    void select(const std::vector<std::string> &tbList, const std::vector<Col> &seletor, bool selectAll, const std::vector<WhereClause> whereClause);
+    void update(const std::string tbName, std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause);
+    void select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     
     ~SystemManager() { if (_currentDb.isOpen()) _sm_manager.closeDb(_currentDb); }
     
