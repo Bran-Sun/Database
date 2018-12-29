@@ -119,9 +119,7 @@ int RM_FileHandle::updateRecord(const RM_Record &record)
     }
     
     charp start = (charp)b + RM_HEADER_LEN * 4 + RECORD_MAP + slotID * _recordSize;
-    charp newData;
-    record.getData(newData);
-    memcpy(start, newData, _recordSize);
+    memcpy(start, record._data.c_str(), _recordSize);
     
     _bpm->markDirty(index);
     _modifyIndex.insert(index);

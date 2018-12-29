@@ -66,7 +66,7 @@ int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManage
     
     int pageID, index;
     
-    if (_fm->openFile(dbname.c_str(), _fileID) == -1) {
+    if (!_fm->openFile(dbname.c_str(), _fileID)) {
         printf("dbhanlde: cannot open dbf file!\n");
         return -1;
     }
@@ -336,7 +336,9 @@ void DatabaseHandle::select(std::vector<std::string> &tbList, std::vector<Col> &
         }
     }
     
-    if (tbList.size() == 1) {
+    if (tbList.size() == 1)
+    {
         _tableHandles.at(tbList[0]).selectSingle(selector, selectAll, whereClause);
     }
+    //TODO multi table
 }

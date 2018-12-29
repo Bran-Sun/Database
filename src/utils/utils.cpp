@@ -149,5 +149,11 @@ bool TypeCompWithComOp(const void *p1, const void *p2, AttrType attrType, ComOp 
             return compString(p1, p2, op, attrlength);
         case CHAR:
             return compChar(p1, p2, op, attrlength);
+        case DATE:
+            //TODO
+            return true;
+        case NUL:
+            //TODO
+            return true;
     }
 }
