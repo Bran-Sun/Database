@@ -42,6 +42,7 @@ private:
     bool _checkWhereClause(RM_Record &record, std::vector<WhereClause> &whereClause);
     bool _checkWhereValid(std::vector<WhereClause> &whereClause);
     bool _checkSetValid(std::vector<SetClause> &setClause);
+    void _modifyWhereClause(std::vector<WhereClause> &whereClause);
     
 private:
     bool _open;

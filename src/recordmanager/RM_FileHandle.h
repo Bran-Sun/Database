@@ -66,7 +66,7 @@ public:
     
 private:
     void _forcePage(int index);
-    int _getEmptySlot(BufType b);
+    int _getEmptySlot(BufType b, int offset = 0);
     void _setEmptySlot(BufType b, int slot);
 
 private:

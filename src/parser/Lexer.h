@@ -84,7 +84,7 @@ namespace parser
         Lexer() {}
         Lexer(const std::string &text): _text(text) { _pos = 0; }
         Token next();
-        void setText(const std::string &text) { _text = text; }
+        void setText(const std::string &text) { _pos = 0; _text = text; }
     public:
         static std::map<std::string, TokenType> keyword_map;
         

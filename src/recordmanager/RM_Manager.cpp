@@ -44,7 +44,7 @@ int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> at
     BufType bt = _bpm->allocPage(fileID, pageID, index, false);
     PageHeaderFile *header = (PageHeaderFile*)bt;
     header->recordSize = recordSize;
-    int recordNum = (PAGE_SIZE - MAX_RECORD_PAGE / 8) / recordSize;
+    int recordNum = (PAGE_SIZE - MAX_RECORD_PAGE / 8 - RM_HEADER_LEN * 4) / recordSize;
     if (recordNum > MAX_RECORD_PAGE) recordNum = MAX_RECORD_PAGE;
     header->recordEachPage = recordNum;
     header->pageNumber = 1;

@@ -28,7 +28,6 @@ int RM_FileHandle::getRecord(const RID &rid, RM_Record &record) const
 int RM_FileHandle::insertRecord(const char *data, RID &rid)
 {
     if (!_isOpen) return -1;
-    
     if (_emptyPageHead == 0) {
         int index;
         BufType b = _bpm->allocPage(_fileID, _pageNum, index, false);
@@ -41,8 +40,8 @@ int RM_FileHandle::insertRecord(const char *data, RID &rid)
         for (int i = 2; i < 9; i++)
             b[i] = 0;
         rid.setRID(_pageNum - 1, 0);
-        charp start = (charp)b + RM_HEADER_LEN * 4 + RECORD_MAP;
-        memcpy(start, data, (size_t) _recordSize);
+        char *start = (char *)b + RM_HEADER_LEN * 4 + RECORD_MAP;
+        memcpy(start, data, (size_t)_recordSize);
         
         _bpm->markDirty(index);
         _modifyIndex.insert(index);
@@ -54,13 +53,13 @@ int RM_FileHandle::insertRecord(const char *data, RID &rid)
         _setEmptySlot(b + 1, slot);
         
         rid.setRID(pageID, slot);
-        charp start = (charp)b;
+        char *start = (char*)b;
         start = start + RM_HEADER_LEN * 4 + RECORD_MAP + slot * _recordSize;
-        memcpy(start, data, _recordSize);
+        memcpy(start, data, (size_t)_recordSize);
         _bpm->markDirty(index);
         _modifyIndex.insert(index);
         
-        int slotCheck = _getEmptySlot(b);
+        int slotCheck = _getEmptySlot(b + 1, slot);
         if (slotCheck == _recordEachPage) {
             if (b[0] != 0) {
                 _emptyPageHead = b[0];
@@ -159,10 +158,11 @@ void RM_FileHandle::init(PageHeaderFile *header, std::shared_ptr<BufPageManager>
     _bpm = bpm;
 }
 
-int RM_FileHandle::_getEmptySlot(BufType b)
+int RM_FileHandle::_getEmptySlot(BufType b, int offset)
 {
-    int count = 0;
-    int i = 0, j = 0;
+    int count = offset;
+    int i = offset / 32;
+    int j = offset - i * 32;
     while (count < _recordEachPage) {
         if (!((b[i] >> j) & 0x1)) break;
         
@@ -197,29 +197,48 @@ void RM_FileHandle::_setEmptySlot(BufType b, int slot)
 
 int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset) const
 {
-    if (!_isOpen) return -1;
+    if (!_isOpen) {
+        printf("rmHandle not open!\n");
+        return -1;
+    }
     
     int pageID, slotID, index;
     ridIn.getRID(pageID, slotID);
     
-    if (pageID == 0 || pageID >= _pageNum || slotID >= _recordEachPage) return -1;  //页号和槽号不满足要求
-    BufType b = _bpm->getPage(_fileID, pageID, index);
+    slotID = slotID + offset;
+    if (pageID == 0 || pageID >= _pageNum || slotID > _recordEachPage) {
+        printf("pageID: %d and slotID: %d not satisfied!\n", pageID, slotID);
+        return -1;  //页号和槽号不满足要求
+    }
     
     bool find = false;
+    BufType b;
+    int p = 0;
+    int q = 0;
+    int count = 0;
     
-    int p = (slotID + offset) >> 5;
-    int q = slotID + offset - (p << 5);
-    int count = slotID + offset;
-    while (count < _recordEachPage) {
-        if ((b[p + RM_HEADER_LEN] >> q) & 0x1) {
-            find = true;
-            break;
-        } else {
-            q++;
-            count++;
-            if (q == 32) {
-                q = 0;
-                p++;
+    if (slotID < _recordEachPage)
+    {
+        b = _bpm->getPage(_fileID, pageID, index);
+    
+        p = slotID >> 5;
+        q = slotID - (p << 5);
+        count = slotID;
+        while ( count < _recordEachPage )
+        {
+            if ((b[p + RM_HEADER_LEN] >> q) & 0x1 )
+            {
+                find = true;
+                break;
+            } else
+            {
+                q++;
+                count++;
+                if ( q == 32 )
+                {
+                    q = 0;
+                    p++;
+                }
             }
         }
     }
@@ -227,7 +246,7 @@ int RM_FileHandle::getNextRecord(RID &ridIn, RM_Record &record, int offset) cons
     if (!find) {
         pageID++;
         while (pageID < _pageNum) {
-            BufType b = _bpm->getPage(_fileID, pageID, index);
+            b = _bpm->getPage(_fileID, pageID, index);
 
             p = 0;
             q = 0;

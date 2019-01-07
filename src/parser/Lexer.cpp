@@ -114,6 +114,12 @@ namespace parser
         if (_text[_pos] == '\'') {
             _pos++;
             while (_pos < _text.length() && _text[_pos] != '\'') {
+                if (_text[_pos] == '\\') {
+                    if (_text[_pos + 1] == '\'') {
+                        _pos = _pos + 2;
+                        continue;
+                    }
+                }
                 _content += _text[_pos];
                 _pos++;
             }

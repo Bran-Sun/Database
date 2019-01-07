@@ -303,7 +303,7 @@ namespace parser {
         } else if (_lookahead.type == TokenType::DATE) {
             _parseLabel(TokenType::DATE);
             info.attrType = DATE;
-            info.attrLength = 4;
+            info.attrLength = 10;
         } else if (_lookahead.type == TokenType::FLOAT) {
             _parseLabel(TokenType::FLOAT);
             info.attrLength = 4;
@@ -326,7 +326,19 @@ namespace parser {
     
     std::string Parser::_parseVALUEDATA()
     {
-        if (_lookahead.type == TokenType::VALUE_INT || _lookahead.type == TokenType::VALUE_FLOAT || _lookahead.type == TokenType::VALUE_STRING || _lookahead.type == TokenType::NUL) {
+        if (_lookahead.type == TokenType::VALUE_INT) {
+            std::stringstream sin(_lookahead.value);
+            int data;
+            sin >> data;
+            _lookahead = _lexer.next();
+            return std::string((char*)&data, 4);
+        } else if (_lookahead.type == TokenType::VALUE_FLOAT) {
+            std::stringstream sin(_lookahead.value);
+            float data;
+            sin >> data;
+            _lookahead = _lexer.next();
+            return std::string((char*)&data, 4);
+        } else if (_lookahead.type == TokenType::VALUE_STRING || _lookahead.type == TokenType::NUL) {
             std::string s = _lookahead.value;
             _lookahead = _lexer.next();
             return s;
@@ -400,10 +412,7 @@ namespace parser {
     
     int Parser::_convertToInt(std::string data)
     {
-        std::stringstream stream(data);
-        int tem;
-        stream >> tem;
-        return tem;
+        return ((int*)data.data())[0];
     }
     
     void Parser::_parseWhereClauseLists()
@@ -414,13 +423,19 @@ namespace parser {
     
     void Parser::_parseWhereClauseReceiver()
     {
-        if (_lookahead.type == TokenType::AND) {
-            _parseLabel(TokenType::AND);
-            _parseWhereClause();
-        } else if (_lookahead.type == TokenType::COMMA) {
-            return;
-        } else {
-            //TODO
+        while (true)
+        {
+            if ( _lookahead.type == TokenType::AND )
+            {
+                _parseLabel(TokenType::AND);
+                _parseWhereClause();
+            } else if ( _lookahead.type == TokenType::SEMICOLON )
+            {
+                return;
+            } else
+            {
+                //TODO
+            }
         }
     }
     
@@ -428,6 +443,7 @@ namespace parser {
         _where.left.isVal = false;
         _where.left.col = _parseCol();
         _parseColSecond();
+        _whereClause.push_back(_where);
     };
     
     Col Parser::_parseCol() {
@@ -448,21 +464,27 @@ namespace parser {
     
     void Parser::_parseColSecond() {
         if (_lookahead.type ==  TokenType::EQ) {
+            _parseLabel(TokenType::EQ);
             _where.comOp = EQ_OP;
             _where.right = _parseExpr();
         } else if (_lookahead.type == TokenType::NE) {
+            _parseLabel(TokenType::NE);
             _where.comOp = NE_OP;
             _where.right = _parseExpr();
         } else if (_lookahead.type == TokenType::GE) {
+            _parseLabel(TokenType::GE);
             _where.comOp = GE_OP;
             _where.right = _parseExpr();
         } else if (_lookahead.type == TokenType::LE) {
+            _parseLabel(TokenType::LE);
             _where.comOp = LE_OP;
             _where.right = _parseExpr();
         } else if (_lookahead.type == TokenType::GT) {
+            _parseLabel(TokenType::GT);
             _where.comOp = GT_OP;
             _where.right = _parseExpr();
         } else if (_lookahead.type == TokenType::LT) {
+            _parseLabel(TokenType::LT);
             _where.comOp = LT_OP;
             _where.right = _parseExpr();
         } else if (_lookahead.type == TokenType::IS) {
@@ -558,6 +580,7 @@ namespace parser {
     
     void Parser::_parseSelector() {
         if (_lookahead.type == TokenType::STARKEY) {
+            _parseLabel(TokenType::STARKEY);
             _selectAll = true;
         } else if (_lookahead.type == TokenType::IDENTIFIER) {
             _selectAll = false;

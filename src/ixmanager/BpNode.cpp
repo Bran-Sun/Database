@@ -224,8 +224,11 @@ void BpNode::insertInternalKey(std::shared_ptr<BpNode> rc, int attrlength)
     _pageIndex.insert(_pageIndex.begin() + _hop + 1, rc->getPageID());
 }
 
-void BpNode::deleteKey()
+void BpNode::deleteKey(BufType bt, int attrlength)
 {
+    if (_keys.empty()) {
+        _load(bt, attrlength);
+    }
     if (_terminal) {
         _keys.erase(_keys.begin() + _hop - 1);
         _rids.erase(_rids.begin() + _hop - 1);

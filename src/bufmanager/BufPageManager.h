@@ -23,8 +23,11 @@ public:
 	 */
 	BufType* addr;
 	BufType allocMem(size_t pageSize = PAGE_SIZE) {
-		return new unsigned int[(pageSize >> 2)];
+		BufType tem =  new unsigned int[(pageSize >> 2)];
+		memset((void*)tem, 0, pageSize);
+		return tem;
 	}
+	
 	BufType fetchPage(int typeID, int pageID, int& index, size_t pageSize = PAGE_SIZE) {
 		BufType b;
 		index = replace->find();

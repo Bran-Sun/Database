@@ -181,50 +181,44 @@ void TableHandle::insert(const std::vector<std::vector<DataAttr>> &data)
     
     int recordSize = _rmHandle.getRecordSize();
     
-    char *buf = (char*)malloc(recordSize * sizeof(char));
-    int *head = (int*)buf;
+    std::string buf;
+    buf.assign(recordSize, '\0');
     
     for (auto &record: data) {  //insert Record
-        memset(buf, 0, (size_t)recordSize);
+        buf.assign(recordSize, '\0');
         int point = RECORD_HEAD * 4;
-        
+        int head = 0;
         for (int i = 0; i < record.size(); i++) {
             if (record[i].isNull) {
                 if (_attributions[i].isNull) {
-                    head[RECORD_NULLBIT] |= (1 << i);
+                    head |= (1 << i);
                 } else {
                     printf("this attributions can't insert!\n");
                 }
             } else {
-                if (_attributions[i].attrType == INT) {
-                    stringstream r(record[i].data);
-                    int tem;
-                    r >> tem;
-                    ((int*)(buf + point))[0] = tem;
-                } else if (_attributions[i].attrType == FLOAT){
-                    stringstream r(record[i].data);
-                    float tem;
-                    r >> tem;
-                    ((float*)(buf + point))[0] = tem;
+                if (_attributions[i].attrType == INT || _attributions[i].attrType == FLOAT) {
+                    buf.replace(point, _attributions[i].attrLength, record[i].data);
                 } else if (_attributions[i].attrLength < record[i].data.size()) {
+                    printf("can't match: %d\n", i);
                     printf("this data is too long!\n");
                 } else {
-                    strncpy(buf + point, record[i].data.c_str(), record[i].data.size());
+                    buf.replace(point, record[i].data.size(), record[i].data);
                 }
             }
             point += _attributions[i].attrLength;
         }
+        std::string tem((const char*)&head, 4);
         
-        _rmHandle.insertRecord(buf, rid);
+        buf.replace(4, 4, tem);
+        
+        _rmHandle.insertRecord(buf.c_str(), rid);
         rids.push_back(rid);
     }
     
     for (int i = 0; i < _attributions.size(); i++) {
         if (_attributions[i].isIndex) {
             for (int j = 0; j < data.size(); j++) {
-                memset(buf, 0, (size_t)_attributions[i].attrLength);
-                strncpy(buf, data[j][i].data.c_str(), data[j][i].data.size());
-                _ixHandles.at(_attributions[i].attrName).insertEntry(buf, rids[j]);
+                _ixHandles.at(_attributions[i].attrName).insertEntry(data[j][i].data.c_str(), rids[j]);
             }
         }
     }
@@ -236,8 +230,7 @@ void TableHandle::del(std::vector<WhereClause> &whereClause) {
     
     std::vector<RM_Record> records;
     int recordSize = _rmHandle.getRecordSize();
-    char *buf = (char*)malloc(recordSize * sizeof(char));
-    
+
     RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
     RM_Record recordIn;
     
@@ -255,13 +248,12 @@ void TableHandle::del(std::vector<WhereClause> &whereClause) {
     for (auto &record: records)
     {
         const char *head = record._data.c_str();
-        RID rid = record.getRID();
         int offset = 0;
         for ( int i = 0; i < _attributions.size(); i++ )
         {
             if ( _attributions[i].isIndex)
             {
-                _ixHandles.at(_attributions[i].attrName).deleteEntry(head + RECORD_HEAD * 4 + offset, rid);
+                _ixHandles.at(_attributions[i].attrName).deleteEntry(head + RECORD_HEAD * 4 + offset, record.getRID());
             }
             offset += _attributions[i].attrLength;
         }
@@ -324,6 +316,8 @@ void TableHandle::update(std::vector<WhereClause> &whereClause, std::vector<SetC
         }
     }
     
+    printf("update record size: %lu\n", records.size());
+    
     for (auto &record: records) {
         for (auto &clause: setClause) {
             int offset = 0;
@@ -334,11 +328,12 @@ void TableHandle::update(std::vector<WhereClause> &whereClause, std::vector<SetC
             }
             
             if (_attributions[index].isIndex) {
-                _ixHandles.at(_attributions[index].attrName).deleteEntry(record._data.c_str() + offset, record.getRID());
+                _ixHandles.at(_attributions[index].attrName).deleteEntry(record._data.c_str() + offset + 4 * RECORD_HEAD, record.getRID());
             }
-            record._data.replace(offset, _attributions[index].attrLength, clause.value);
+            record._data.replace(offset + 4 * RECORD_HEAD, _attributions[index].attrLength, std::string()); //for clear()
+            record._data.replace(offset + 4 * RECORD_HEAD, _attributions[index].attrLength, clause.value);
             if (_attributions[index].isIndex) {
-                _ixHandles.at(_attributions[index].attrName).insertEntry(record._data.c_str() + offset, record.getRID());
+                _ixHandles.at(_attributions[index].attrName).insertEntry(record._data.c_str() + offset + 4 * RECORD_HEAD, record.getRID());
             }
         }
         _rmHandle.updateRecord(record);
@@ -350,10 +345,16 @@ bool TableHandle::_checkSetValid(std::vector<SetClause> &setClause)
     return true;
 }
 
+void TableHandle::_modifyWhereClause(std::vector<WhereClause> &whereClause)
+{
+
+}
+
 void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause)
 {
-    std::vector<std::string> data;
+    std::vector<std::vector<std::string>> data;
     
+    _modifyWhereClause(whereClause);
     _checkWhereValid(whereClause);
     
     //prepare selector
@@ -373,24 +374,62 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
     }
     
     int recordSize = _rmHandle.getRecordSize();
-    char *buf = (char*)malloc(recordSize * sizeof(char));
     
-    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
+    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr); //no use GE
     RM_Record recordIn;
     
     while (iter.getNextRecord(recordIn) != -1) {
         if (_checkWhereClause(recordIn, whereClause)) {
+            data.emplace_back();
             if (selectAll) {
-                data.push_back(recordIn._data);
+                int offset = 0;
+                for (auto &attr: _attributions)
+                {
+                    data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offset, attr.attrLength));
+                    offset += attr.attrLength;
+                }
             } else
             {
                 std::string tem;
                 for ( int i = 0; i < indexes.size(); i++ )
                 {
-                    tem += recordIn._data.substr(offsets[i], _attributions[indexes[i]].attrLength);
+                    data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offsets[i], _attributions[indexes[i]].attrLength));
                 }
-                data.push_back(tem);
             }
         }
     }
+    
+    std::string splitLine;
+    splitLine.assign(50, '=');
+    printf("%s\n", splitLine.c_str());
+    if (selectAll) {
+        for (auto &attr: _attributions) {
+            printf("%s\t", attr.attrName.c_str());
+        }
+    } else
+    {
+        for ( auto &i : indexes )
+        {
+            printf("%s\t", _attributions[i].attrName.c_str());
+        }
+    }
+    printf("\n");
+    printf("%s\n", splitLine.c_str());
+    
+    for (auto r: data) {
+        for (int i = 0; i < _attributions.size(); i++) {
+            if (_attributions[i].attrType == INT) {
+                int *t = (int*)(r[i].c_str());
+                printf("%d\t", t[0]);
+            } else if (_attributions[i].attrType == FLOAT) {
+                float *t = (float*)(r[i].c_str());
+                printf("%.2f\t", t[0]);
+            } else {
+                printf("%s\t", r[i].c_str());
+            }
+        }
+        printf("\n");
+    }
+    
+    printf("%s\n", splitLine.c_str());
 }

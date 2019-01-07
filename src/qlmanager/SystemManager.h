@@ -33,6 +33,9 @@ public:
     void select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     
     ~SystemManager() { if (_currentDb.isOpen()) _sm_manager.closeDb(_currentDb); }
+
+private:
+    std::string _getTypeString(const AttrInfo &attr);
     
 private:
     SM_Manager _sm_manager;

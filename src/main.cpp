@@ -82,7 +82,7 @@ int main() {
     //具体的函数大家可以看看ppt或者程序的注释
     */
     
-    /*
+    
     clock_t start, end;
     start = clock();
     
@@ -97,7 +97,7 @@ int main() {
     RM_FileHandle handle;
     rm_manager->openFile(tableName, handle);
     
-    for (int k = 0; k < 1000000; k++)
+    for (int k = 0; k < 100000; k++)
     {
         std::vector<char> arr;
         for ( int i = 0; i < 58; i++ )
@@ -108,10 +108,10 @@ int main() {
     }
     
     rm_manager->closeFile(handle);
-    */
     
-    /*
-    clock_t start, end;
+    
+    
+    /*clock_t start, end;
     start = clock();
     
     std::shared_ptr<IX_Manager> manager = std::make_shared<IX_Manager>(IX_Manager(fm, bpm));
@@ -120,7 +120,7 @@ int main() {
     IX_IndexHandle handle;
     manager->openIndex("Student", 0, handle);
     
-    int number = 100000;
+    int number = 1000;
     int begin = 1;
     int *array = new int[number];
     for (int i = 0; i < number; i++)
@@ -128,9 +128,9 @@ int main() {
     for (int i = 0; i < number; i++)
         handle.insertEntry((void*)(array + i), RID(i + begin, i + begin));
     
-//    int *p = new int;
-//    *p = 60;
-//    handle.deleteEntry((void*)p, RID(60, 60));
+    int *p = new int;
+    *p = 600;
+    handle.deleteEntry((void*)p, RID(600, 600));
     manager->closeIndex(handle);
     
     

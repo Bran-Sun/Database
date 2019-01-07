@@ -29,7 +29,7 @@ public:
         system.insert(_tbName, _data);
     }
     void show() {
-        printf("insert table %s\n", _tbName.c_str());
+        printf("insert table %s, datasize: %lu\n", _tbName.c_str(), _data.size());
     };
 private:
     std::string _tbName;
@@ -45,7 +45,7 @@ public:
         system.del(_tbName, _whereClause);
     }
     void show() {
-        printf("delete from table %s\n", _tbName.c_str());
+        printf("delete from table %s, whereClause: %lu\n", _tbName.c_str(), _whereClause.size());
     }
 private:
     std::string _tbName;
@@ -61,7 +61,7 @@ public:
         system.update(_tbName, _whereClause, _setClause);
     }
     void show() {
-        printf("update table %s\n", _tbName.c_str());
+        printf("update table %s, setclause: %lu, whereClause: %lu\n", _tbName.c_str(), _setClause.size(), _whereClause.size());
     }
 private:
     std::string _tbName;
@@ -80,8 +80,9 @@ public:
     }
     
     void show() {
-        printf("select table\n");
+        printf("select table %s, whereSize: %lu\n", _tbList[0].c_str(), _whereClause.size());
     }
+    
 private:
     std::vector<std::string> _tbList;
     std::vector<Col> _selector;

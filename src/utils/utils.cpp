@@ -17,6 +17,7 @@ int TypeComp(const void *p1, const void *p2, AttrType type, int attrlength) {
             if (*(float*)p1 < *(float*)p2) return -1;
             else if (*(float*)p1 == *(float*)p2) return 0;
             else return 1;
+        case DATE:
         case STRING:
             a = (char*)p1;
             b = (char*)p2;
@@ -145,13 +146,11 @@ bool TypeCompWithComOp(const void *p1, const void *p2, AttrType attrType, ComOp 
             return compBool(p1, p2, op, attrlength);
         case FLOAT:
             return compFloat(p1, p2, op, attrlength);
+        case DATE:
         case STRING:
             return compString(p1, p2, op, attrlength);
         case CHAR:
             return compChar(p1, p2, op, attrlength);
-        case DATE:
-            //TODO
-            return true;
         case NUL:
             //TODO
             return true;

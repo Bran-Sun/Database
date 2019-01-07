@@ -14,13 +14,15 @@
 #define IX_NODE_H 4
 
 struct Key {
-    std::vector<char> data;
-    Key(const char* p, int length): data(length) {
-        memcpy(data.data(), p, length);
+    std::string data;
+    Key(const char* p, int length) {
+        data.assign(length, '\0');
+        data.replace(0, length, p);
     }
     
-    Key(const void* p, int length): data(length) {
-        memcpy(data.data(), p, length);
+    Key(const void* p, int length) {
+        data.assign(length, '\0');
+        data.replace(0, length, (const char*)p);
     }
 };
 
@@ -55,7 +57,7 @@ public:
     void setParent(std::shared_ptr<BpNode> parent) { _parent = std::move(parent); }
     void initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode>rc, int attrlength);
     void insertInternalKey(std::shared_ptr<BpNode> node, int attrlength);
-    void deleteKey();
+    void deleteKey(BufType bt, int attrlength);
     
     ~BpNode();
 

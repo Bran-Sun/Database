@@ -31,7 +31,7 @@ public:
         _attrOffset = attrOffset;
         _comOp = comOp;
         _value = value;
-        _rid.setRID(0, -1);
+        _rid.setRID(1, -1);
     }
     
     int getNextRecord(RM_Record &record);

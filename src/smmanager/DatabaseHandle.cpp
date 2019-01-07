@@ -96,7 +96,7 @@ void DatabaseHandle::_modifyDBFile()
         memcpy(headerPage->tables[cnt].tableName, i.c_str(), i.size() + 1);
         cnt++;
     }
-    printf("TableNum: %d\n", _tableNames.size());
+    printf("TableNum: %lu\n", _tableNames.size());
     _bpm->markDirty(index);
     _bpm->writeBack(index);
     _bpm->release(index);
