@@ -7,7 +7,7 @@
 
 #include "../utils/pagedef.h"
 
-#define IX_PAGE_SIZE 512
+#define IX_PAGE_SIZE 8192
 #define RID_PER_BUCKET 32 //每个桶的rid最多数目
 
 struct IX_HeaderPage

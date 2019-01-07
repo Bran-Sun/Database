@@ -105,7 +105,7 @@ int RM_Manager::closeFile(RM_FileHandle &handle)
     if (handle.isHeaderModify()) {
         int index;
         int pageID = 0;
-        BufType b = _bpm->allocPage(handle.getFileID(), pageID, index, false);
+        BufType b = _bpm->allocPage(handle.getFileID(), pageID, index,true);
         PageHeaderFile *bt = (PageHeaderFile*)b;
         handle.setHeaderPage(bt);
         _bpm->markDirty(index);

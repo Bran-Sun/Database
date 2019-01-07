@@ -196,7 +196,17 @@ void TableHandle::insert(const std::vector<std::vector<DataAttr>> &data)
                     printf("this attributions can't insert!\n");
                 }
             } else {
-                if (_attributions.size() < record[i].data.size()) {
+                if (_attributions[i].attrType == INT) {
+                    stringstream r(record[i].data);
+                    int tem;
+                    r >> tem;
+                    ((int*)(buf + point))[0] = tem;
+                } else if (_attributions[i].attrType == FLOAT){
+                    stringstream r(record[i].data);
+                    float tem;
+                    r >> tem;
+                    ((float*)(buf + point))[0] = tem;
+                } else if (_attributions[i].attrLength < record[i].data.size()) {
                     printf("this data is too long!\n");
                 } else {
                     strncpy(buf + point, record[i].data.c_str(), record[i].data.size());

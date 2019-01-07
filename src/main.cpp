@@ -38,12 +38,17 @@ int main() {
     MyBitMap::initConst();   //新加的初始化
     std::shared_ptr<FileManager> fm = std::make_shared<FileManager>(FileManager());
     std::shared_ptr<BufPageManager> bpm = std::make_shared<BufPageManager>(BufPageManager(fm));
-    /*
+    
     fm->createFile("testfile.txt"); //新建文件
     fm->createFile("testfile2.txt");
     int fileID, f2;
     fm->openFile("testfile.txt", fileID); //打开文件，fileID是返回的文件id
     fm->openFile("testfile2.txt", f2);
+    
+    printf("fid: %d\n", fileID);
+    printf("fid2: %d\n", f2);
+    
+    /*
     for (int pageID = 0; pageID < 1000; ++ pageID) {
         int index;
         //为pageID获取一个缓存页
@@ -105,7 +110,7 @@ int main() {
     rm_manager->closeFile(handle);
     */
     
-    
+    /*
     clock_t start, end;
     start = clock();
     
@@ -128,7 +133,7 @@ int main() {
 //    handle.deleteEntry((void*)p, RID(60, 60));
     manager->closeIndex(handle);
     
-    /*
+    
     clock_t start, end;
     start = clock();
     
@@ -147,8 +152,8 @@ int main() {
     handle.createIndex(tableName, indexName);
     
     manager.closeDb(handle);
-    */
+    
     end = clock();
-    cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
+    cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;*/
     return 0;
 }

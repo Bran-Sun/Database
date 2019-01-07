@@ -96,6 +96,7 @@ void DatabaseHandle::_modifyDBFile()
         memcpy(headerPage->tables[cnt].tableName, i.c_str(), i.size() + 1);
         cnt++;
     }
+    printf("TableNum: %d\n", _tableNames.size());
     _bpm->markDirty(index);
     _bpm->writeBack(index);
     _bpm->release(index);
@@ -134,6 +135,10 @@ int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo
     for (auto &at: attributes) {
         if (at.isPrimary || at.isForeign) {
             at.isIndex = true;
+        }
+        
+        if (at.attrType == INT || at.attrType == FLOAT) {
+            at.attrLength = 4;
         }
     }
     

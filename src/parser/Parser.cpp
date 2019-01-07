@@ -351,6 +351,7 @@ namespace parser {
             _parseLabel(TokenType::COMMA);
             _parseLabel(TokenType::LEFTPARENTHESIS);
             _parseValueList();
+            _parseLabel(TokenType::RIGHTPARENTHESIS);
             _parseValueNext();
         } else if (_lookahead.type == TokenType::SEMICOLON) {
             return;
@@ -369,16 +370,16 @@ namespace parser {
     void Parser::_parseValue() {
         if (_lookahead.type == TokenType::VALUE_INT) {
             std::string d = _parseVALUEDATA();
-            (_data.end())->emplace_back(d, INT);
+            _data[_data.size() - 1].emplace_back(d, INT);
         } else if (_lookahead.type == TokenType::VALUE_FLOAT) {
             std::string d = _parseVALUEDATA();
-            (_data.end())->emplace_back(d, FLOAT);
+            _data[_data.size() - 1].emplace_back(d, FLOAT);
         } else if (_lookahead.type == TokenType::VALUE_STRING) {
             std::string d = _parseVALUEDATA();
-            (_data.end())->emplace_back(d, STRING);
+            _data[_data.size() - 1].emplace_back(d, STRING);
         } else if (_lookahead.type == TokenType::NUL) {
             _parseVALUEDATA();
-            (_data.end())->emplace_back(true);
+            _data[_data.size() - 1].emplace_back(true);
         } else {
             //TODO
         }
@@ -389,6 +390,7 @@ namespace parser {
         if (_lookahead.type == TokenType::COMMA) {
             _parseLabel(TokenType::COMMA);
             _parseValue();
+            _parseValueReceiver();
         } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS) {
             return;
         } else {

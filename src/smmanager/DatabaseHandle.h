@@ -17,12 +17,14 @@
 #include "../ixmanager/IX_Manager.h"
 #include "TableHandle.h"
 
+#define MAX_TABLE_NUM 32
+
 struct DBHeadPage
 {
     int tableNum;
     struct TableInfo{
         char tableName[TABLE_NAME_MAX_LENGTH + 1];
-    } tables[MAX_COL_NUM];
+    } tables[MAX_TABLE_NUM];
 };
 
 class DatabaseHandle

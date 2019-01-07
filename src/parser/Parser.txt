@@ -54,7 +54,7 @@
 
 <valueList>  := <value> <valueReceiver> //done
 
-<valueReceiver> := ',' <value>  //done
+<valueReceiver> := ',' <value> <valueReceiver>  //done
                 | empty {')'}   //done
 
 <value>  := VALUE_INT   //done

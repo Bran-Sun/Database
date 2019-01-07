@@ -10,53 +10,29 @@
 unsigned char MyBitMap::h[61]; //defination
 
 int main() {
+    MyBitMap::initConst();   //新加的初始化
     SystemManager system;
     std::string command("CREATE DATABASE orderDB;\n"
-                        "\n"
                         "USE orderDB;\n"
-                        "\n"
-                        "CREATE TABLE restaurant (\n"
-                        "  id INT(10) NOT NULL,\n"
-                        "  name CHAR(25) NOT NULL,\n"
-                        "  address CHAR(100),\n"
-                        "  phone CHAR(20),\n"
-                        "  rate FLOAT,\n"
-                        "  PRIMARY KEY (id)\n"
-                        ");\n"
-                        "\n"
                         "CREATE TABLE customer(\n"
                         "\tid INT(10) NOT NULL,\n"
                         "\tname CHAR(25) NOT NULL,\n"
                         "\tgender CHAR(1) NOT NULL,\n"
                         "\tPRIMARY KEY (id)\n"
                         ");\n"
-                        "\n"
-                        "CREATE TABLE food(\n"
-                        "\tid INT(10) NOT NULL,\n"
-                        "\trestaurant_id INT(10),\n"
-                        "\tname CHAR(100) NOT NULL,\n"
-                        "\tprice FLOAT NOT NULL,\n"
-                        "\tPRIMARY KEY (id),\n"
-                        "\tFOREIGN KEY (restaurant_id) REFERENCES restaurant(id)\n"
-                        ");\n"
-                        "\n"
-                        "CREATE TABLE orders(\n"
-                        "\tid INT(10) NOT NULL,\n"
-                        "\tcustomer_id INT(10) NOT NULL,\n"
-                        "\tfood_id INT(10) NOT NULL,\n"
-                        "\tdate DATE,\n"
-                        "\tquantity INT(10),\n"
-                        "\tPRIMARY KEY (id),\n"
-                        "\tFOREIGN KEY (customer_id) REFERENCES customer(id),\n"
-                        "\tFOREIGN KEY (food_id) REFERENCES food(id)\n"
-                        ");"
+                        "SHOW TABLES;\n"
+                        "INSERT INTO `customer` VALUES (300001,'CHAD CABELLO','F');\n"
                         );
+    
+    std::string showCommand("USE orderDB;\n"
+                            "DESC customer;\n");
     
     using namespace parser;
     Parser par;
-    std::vector<std::shared_ptr<Action>> actions = par.parse(command);
+    std::vector<std::shared_ptr<Action>> actions = par.parse(showCommand);
     
-    for (auto act : actions) {
+    for (auto act : actions)
+    {
         act->show();
         act->execute(system);
     }
