@@ -204,7 +204,7 @@ int IX_IndexHandle::_delete(std::shared_ptr<BpNode> node, const void *pData, con
     return 0;
 }
 
-std::shared_ptr<BpNode> IX_IndexHandle::_findKey(const void *pData)
+std::shared_ptr<BpNode> IX_IndexHandle::_findKey(const void *pData) const
 {
     std::shared_ptr<BpNode> cur = _root;
     int next;
@@ -304,6 +304,7 @@ int IX_IndexHandle::_getEmptyPage()
         int p = _emptyPageList.front();
         _emptyPageList.pop_front();
         _emptyPageSet.erase(p);
+        _headerModify = true;
         return p;
     } else {
         _pageNumber++;
@@ -323,7 +324,7 @@ int IX_IndexHandle::_deleteKey(std::shared_ptr<BpNode> node)
     return 0;
 }
 
-std::shared_ptr<BpNode> IX_IndexHandle::getLeftNode() const
+std::shared_ptr<BpNode> IX_IndexHandle::getLeftNode(int &index) const
 {
     std::shared_ptr<BpNode> cur = _root;
     while (!cur->isTerminal()) {
@@ -333,10 +334,32 @@ std::shared_ptr<BpNode> IX_IndexHandle::getLeftNode() const
         std::shared_ptr<BpNode> nextNode = std::make_shared<BpNode>(BpNode(cur, nextPageID, b, _attrlength, false));
         cur = nextNode;
     }
+    index = -1;
     return cur;
 }
 
-int IX_IndexHandle::getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const
+std::shared_ptr<BpNode> IX_IndexHandle::getMiddleNode(int &index, const void *key) const
+{
+    std::shared_ptr<BpNode> cur = _findKey(key);
+    int result = cur->findIndex(key, index, _attrType, _attrlength);
+    index++;
+}
+
+std::shared_ptr<BpNode> IX_IndexHandle::getRightNode(int &index) const
+{
+    std::shared_ptr<BpNode> cur = _root;
+    while (!cur->isTerminal()) {
+        int nextPageID = cur->getChild(cur->getKeyNum() - 1);
+        int pageIndex;
+        BufType b = _bpm->getPage(_fileID, nextPageID, pageIndex, IX_PAGE_SIZE);
+        std::shared_ptr<BpNode> nextNode = std::make_shared<BpNode>(BpNode(cur, nextPageID, b, _attrlength, false));
+        cur = nextNode;
+    }
+    index = cur->getKeyNum();
+    return cur;
+}
+
+int IX_IndexHandle::getFrontNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const
 {
     nodeIndex++;
     while (nodeIndex >= node->getKeyNum()) {
@@ -349,7 +372,26 @@ int IX_IndexHandle::getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, v
         node = nextNode;
     }
     
-    key = (void*)node->_keys[nodeIndex].data.data();
-    rid = node->_rids[nodeIndex];
+    key = (void*)node->getLightKey(nodeIndex, _attrlength);
+    rid = node->getLightRID(nodeIndex);
+    return 0;
+}
+
+int IX_IndexHandle::getBackNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const
+{
+    nodeIndex--;
+    printf("nodeIndex: %d\n", nodeIndex);
+    while (nodeIndex < 0) {
+        int nextPageID = node->getPrePage();
+        if (nextPageID == 0) return -1;
+        int pageIndex;
+        BufType b = _bpm->getPage(_fileID, nextPageID, pageIndex, IX_PAGE_SIZE);
+        std::shared_ptr<BpNode> nextNode = std::make_shared<BpNode>(BpNode(nullptr, nextPageID, b, _attrlength, false));
+        nodeIndex = nextNode->getKeyNum() - 1;
+        node = nextNode;
+    }
+    
+    key = (void*)node->getLightKey(nodeIndex, _attrlength);
+    rid = node->getLightRID(nodeIndex);
     return 0;
 }

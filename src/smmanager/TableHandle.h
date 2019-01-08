@@ -10,6 +10,7 @@
 #include "../recordmanager/RM_Iterator.h"
 #include "../ixmanager/IX_Manager.h"
 #include "../ixmanager/IX_IndexHandle.h"
+#include "../ixmanager/IX_IndexScan.h"
 #include "DataInfo.h"
 #include <map>
 

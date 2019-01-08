@@ -373,32 +373,95 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
         }
     }
     
-    int recordSize = _rmHandle.getRecordSize();
-    
-    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr); //no use GE
-    RM_Record recordIn;
-    
-    while (iter.getNextRecord(recordIn) != -1) {
-        if (_checkWhereClause(recordIn, whereClause)) {
-            data.emplace_back();
-            if (selectAll) {
-                int offset = 0;
-                for (auto &attr: _attributions)
-                {
-                    data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offset, attr.attrLength));
-                    offset += attr.attrLength;
+    WhereClause indexClause;
+    AttrInfo indexInfo;
+    int indexOffset;
+    bool find = false;
+    for (WhereClause &clause: whereClause) {
+        int offset = 0;
+        for ( auto &attr : _attributions )
+        {
+            if ((clause.left.col.indexName == attr.attrName) && (attr.isIndex) && (clause.right.isVal) && (!clause.right.useNull)) {
+                if (!find) {
+                    indexClause = clause;
+                    indexInfo = attr;
+                    indexOffset = offset;
+                    find = true;
+                } else if (indexInfo.attrLength < attr.attrLength) {
+                    indexClause = clause;
+                    indexInfo = attr;
+                    indexOffset = offset;
                 }
-            } else
-            {
-                std::string tem;
-                for ( int i = 0; i < indexes.size(); i++ )
+                break;
+            }
+            offset += attr.attrLength;
+        }
+    }
+    
+    
+    
+    
+    if (!find) {
+        RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr); //no use GE
+        RM_Record recordIn;
+    
+        while (iter.getNextRecord(recordIn) != -1) {
+            if (_checkWhereClause(recordIn, whereClause)) {
+                data.emplace_back();
+                if (selectAll) {
+                    int offset = 0;
+                    for (auto &attr: _attributions)
+                    {
+                        data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offset, attr.attrLength));
+                        offset += attr.attrLength;
+                    }
+                } else
                 {
-                    data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offsets[i], _attributions[indexes[i]].attrLength));
+                    std::string tem;
+                    for ( int i = 0; i < indexes.size(); i++ )
+                    {
+                        data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offsets[i], _attributions[indexes[i]].attrLength));
+                    }
+                }
+            }
+        }
+    } else {
+        if (!indexClause.right.isNull) //如果是 (= null) 就清空
+        {
+            IX_IndexScan iter(_ixHandles.at(indexInfo.attrName), indexInfo.attrType, indexInfo.attrLength,
+                              indexClause.comOp, indexClause.right.value.c_str());
+            std::vector<RID> rids;
+            RID rid;
+            RM_Record recordIn;
+            while (iter.getNextEntry(rid) != -1) {
+                rids.push_back(rid);
+            }
+            
+            for (auto &r: rids) {
+                _rmHandle.getRecord(r, recordIn);
+                if (_checkWhereClause(recordIn, whereClause)) {
+                    data.emplace_back();
+                    if (selectAll) {
+                        int offset = 0;
+                        for (auto &attr: _attributions)
+                        {
+                            data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offset, attr.attrLength));
+                            offset += attr.attrLength;
+                        }
+                    } else
+                    {
+                        std::string tem;
+                        for ( int i = 0; i < indexes.size(); i++ )
+                        {
+                            data[data.size() - 1].push_back(recordIn._data.substr(RECORD_HEAD * 4 + offsets[i], _attributions[indexes[i]].attrLength));
+                        }
+                    }
                 }
             }
         }
     }
     
+    //print the result
     std::string splitLine;
     splitLine.assign(50, '=');
     printf("%s\n", splitLine.c_str());

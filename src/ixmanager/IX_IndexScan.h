@@ -11,24 +11,33 @@
 class IX_IndexScan
 {
 public:
-    IX_IndexScan() { _value = nullptr; _handle = nullptr; _node = nullptr; }
-    ~IX_IndexScan() {}
+    enum ScanType {
+        FRONT, //从前往后
+        BACK,   //从后往前
+        MIDDLE  //直接搜
+    };
     
-    int openScan(const IX_IndexHandle *handle, ComOp comOp, void *value);
+public:
+    IX_IndexScan(IX_IndexHandle &handle, AttrType attrType, int attrLength, ComOp comOp, const char *value):
+        _handle(handle), _attrType(attrType), _attrLength(attrLength), _comOp(comOp), _value(value) {
+        _init();
+    }
+    
     int getNextEntry(RID &rid);
-    int closeScan();
-    
+    ~IX_IndexScan() {}
 private:
     bool _satisfy(void *key);
+    void _init();
     
 private:
-    const IX_IndexHandle *_handle;
+    IX_IndexHandle &_handle;
     AttrType _attrType;
-    int  _attrlength;
+    int  _attrLength;
     ComOp _comOp;
-    void *_value;
+    const char *_value;
     std::shared_ptr<BpNode> _node;
     int _nodeIndex;
+    ScanType _scanType;
 };
 
 

@@ -59,6 +59,23 @@ public:
     void insertInternalKey(std::shared_ptr<BpNode> node, int attrlength);
     void deleteKey(BufType bt, int attrlength);
     
+    char* getLightKey(int nodeIndex, int attrLength) { //maybe not safe for other use
+        if (!_terminal) {
+            return (char*)(_buf + IX_NODE_H + _keyNum + 1) + attrLength * nodeIndex;
+        } else {
+            return (char*)(_buf + IX_NODE_H + _keyNum * 2) + attrLength * nodeIndex;
+        }
+    }
+    
+    RID getLightRID(int nodeIndex) {
+        if (_terminal) {
+            return {(int)_buf[IX_NODE_H + nodeIndex * 2], (int)_buf[IX_NODE_H + nodeIndex * 2 + 1]};
+        } else {
+            return {0, 0};
+        }
+    }
+    
+    
     ~BpNode();
 
 private:

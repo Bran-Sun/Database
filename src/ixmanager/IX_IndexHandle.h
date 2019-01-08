@@ -35,12 +35,15 @@ public:
     int forcePages();
     AttrType getAttrType() const { return _attrType; }
     int getAttrlength() const { return _attrlength; }
-    std::shared_ptr<BpNode> getLeftNode() const;
-    int getNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
-
+    std::shared_ptr<BpNode> getLeftNode(int &index) const;
+    std::shared_ptr<BpNode> getRightNode(int &index) const;
+    std::shared_ptr<BpNode> getMiddleNode(int &index, const void *key) const;
+    int getFrontNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
+    int getBackNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
+    
 private:
     void _forcePage(int index);
-    std::shared_ptr<BpNode> _findKey(const void *pData);
+    std::shared_ptr<BpNode> _findKey(const void *pData) const;
     int _insert(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);
     int _delete(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);
     int _insertKey(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);

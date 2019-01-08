@@ -104,6 +104,8 @@ std::shared_ptr<BpNode> BpNode::split(int pageID)
     for (int i = mid; i < size; i++) {
         node->_keys.push_back(_keys[i]);
     }
+    node->_keyNum = size - mid;
+    
     _keys.erase(_keys.begin() + mid, _keys.end());
     
     if (_terminal) {

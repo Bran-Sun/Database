@@ -74,7 +74,7 @@ int main() {
                               );
     
     std::string selectCommand("USE orderDB;\n"
-                              "SELECT *FROM orders WHERE date < '2016-09-12';\n");
+                              "SELECT * FROM customer WHERE id < 314000;\n");
     
     std::string updateCommand("USE orderDB;\n"
                               "UPDATE customer SET name = 'BRAN' WHERE id=300003;\n"
@@ -89,7 +89,7 @@ int main() {
     std::string showDatabases("SHOW DATABASES;\n");
     std::string showTables("SHOW TABLES;\n");
     std::string descTable("DESC orders;\n");
-    std::string selectOrders("SELECT * FROM orders WHERE date > '2016-09-12';\n");
+    std::string selectOrders("SELECT * FROM customer WHERE date > '2016-09-12';\n");
     
     std::ifstream fin("customer.sql");
     std::string insertCustomer;
@@ -113,7 +113,7 @@ int main() {
     
     using namespace parser;
     Parser par;
-    std::vector<std::shared_ptr<Action>> actions = par.parse(useCommand + selectCommand);
+    std::vector<std::shared_ptr<Action>> actions = par.parse(selectCommand);
     
     clock_t start, end;
     start = clock();

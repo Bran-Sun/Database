@@ -90,7 +90,10 @@ std::string SystemManager::_getTypeString(const AttrInfo &attr)
 
 void SystemManager::insert(const std::string tbName, const std::vector<std::vector<DataAttr>> &data)
 {
-    _currentDb.insert(tbName, data);
+    auto first = data.begin() + 0;
+    auto last = data.begin() + 100;
+    std::vector<std::vector<DataAttr>> sub_data(first, last);
+    _currentDb.insert(tbName, sub_data);
 }
 
 void SystemManager::del(const std::string tbName, std::vector<WhereClause> &whereClause)
