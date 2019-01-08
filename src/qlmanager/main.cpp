@@ -73,8 +73,7 @@ int main() {
                               "INSERT INTO `food` VALUES (200001,1613,'Boiled dumplings',64.0236),(200002,1768,'Waffles',80.5322);"
                               );
     
-    std::string selectCommand("USE orderDB;\n"
-                              "SELECT * FROM customer WHERE id < 314000;\n");
+    std::string selectCommand("SELECT * FROM customer WHERE id > 314000;\n");
     
     std::string updateCommand("USE orderDB;\n"
                               "UPDATE customer SET name = 'BRAN' WHERE id=300003;\n"
@@ -113,7 +112,7 @@ int main() {
     
     using namespace parser;
     Parser par;
-    std::vector<std::shared_ptr<Action>> actions = par.parse(selectCommand);
+    std::vector<std::shared_ptr<Action>> actions = par.parse(useCommand+selectCommand);
     
     clock_t start, end;
     start = clock();

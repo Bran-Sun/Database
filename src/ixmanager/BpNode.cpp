@@ -84,6 +84,10 @@ void BpNode::insertTerminalKV(const void *pData, int attrlength, const RID &rid)
     _keyNum++;
     _keys.emplace(_keys.begin() + _hop, pData, attrlength);
     _rids.insert(_rids.begin() + _hop, rid);
+//    for (int i = 0; i < _keys.size(); i++) {
+//        printf("%d\t", *(int*)(_keys[i].data.c_str()));
+//    }
+//    printf("\n");
 }
 
 std::shared_ptr<BpNode> BpNode::split(int pageID)

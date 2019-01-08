@@ -16,13 +16,11 @@
 struct Key {
     std::string data;
     Key(const char* p, int length) {
-        data.assign(length, '\0');
-        data.replace(0, length, p);
+        data = std::string(p, length);
     }
     
     Key(const void* p, int length) {
-        data.assign(length, '\0');
-        data.replace(0, length, (const char*)p);
+        data = std::string((char*)p, length);
     }
 };
 

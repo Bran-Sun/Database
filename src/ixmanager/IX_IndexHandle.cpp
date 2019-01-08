@@ -7,7 +7,6 @@
 int IX_IndexHandle::insertEntry(const void *pData, const RID &rid)
 {
     std::shared_ptr<BpNode> node = _findKey(pData); //find most right node
-    
     _insert(node, pData, rid);
     return 0;
 }
