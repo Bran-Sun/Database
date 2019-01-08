@@ -6,8 +6,7 @@
 
 #include "DatabaseHandle.h"
 
-DatabaseHandle::DatabaseHandle()
-{
+DatabaseHandle::DatabaseHandle() {
     _bpm = nullptr;
     _fm = nullptr;
     _rm = nullptr;
@@ -17,15 +16,14 @@ DatabaseHandle::DatabaseHandle()
     _modifyDbf = false;
 }
 
-int DatabaseHandle::close()
-{
-    if (!_open) {
+int DatabaseHandle::close() {
+    if ( !_open ) {
         printf("database is already close!\n");
         return -1;
     }
-    if (_modifyDbf) _modifyDBFile();
+    if ( _modifyDbf ) _modifyDBFile();
     
-    for (auto iter = _tableHandles.begin(); iter != _tableHandles.end(); iter++) {
+    for ( auto iter = _tableHandles.begin(); iter != _tableHandles.end(); iter++ ) {
         iter->second.close();
     }
     
@@ -44,15 +42,14 @@ int DatabaseHandle::close()
     return 0;
 }
 
-int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManager> fm, std::shared_ptr<BufPageManager> bpm)
-{
-    if (_dbName == filename) {
+int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManager> fm,
+                         std::shared_ptr<BufPageManager> bpm) {
+    if ( _dbName == filename ) {
         printf("dbhandle: database is already open!\n");
         return 1;
     }
     
-    if (_open)
-    {
+    if ( _open ) {
         close(); //open another
     }
     
@@ -66,7 +63,7 @@ int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManage
     
     int pageID, index;
     
-    if (!_fm->openFile(dbname.c_str(), _fileID)) {
+    if ( !_fm->openFile(dbname.c_str(), _fileID)) {
         printf("dbhanlde: cannot open dbf file!\n");
         return -1;
     }
@@ -74,9 +71,9 @@ int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManage
     //load dbf file
     pageID = 0;
     BufType header = _bpm->allocPage(_fileID, pageID, index, true);
-    DBHeadPage *headerPage = (DBHeadPage*)header;
+    DBHeadPage *headerPage = (DBHeadPage *) header;
     int tableNum = headerPage->tableNum;
-    for (int i = 0; i < tableNum; i++) {
+    for ( int i = 0; i < tableNum; i++ ) {
         _tableNames.emplace(headerPage->tables[i].tableName);
     }
     _bpm->release(index);
@@ -85,14 +82,13 @@ int DatabaseHandle::open(const std::string &filename, std::shared_ptr<FileManage
     return 0;
 }
 
-void DatabaseHandle::_modifyDBFile()
-{
+void DatabaseHandle::_modifyDBFile() {
     int pageID = 0, index;
     BufType header = _bpm->allocPage(_fileID, pageID, index);
-    DBHeadPage *headerPage = (DBHeadPage*)header;
-    headerPage->tableNum = (int)_tableNames.size();
+    DBHeadPage *headerPage = (DBHeadPage *) header;
+    headerPage->tableNum = (int) _tableNames.size();
     int cnt = 0;
-    for (auto &i: _tableNames) {
+    for ( auto &i: _tableNames ) {
         memcpy(headerPage->tables[cnt].tableName, i.c_str(), i.size() + 1);
         cnt++;
     }
@@ -102,26 +98,25 @@ void DatabaseHandle::_modifyDBFile()
     _bpm->release(index);
 }
 
-bool DatabaseHandle::_checkAttrInfo(const std::vector<AttrInfo> &attributes)
-{
-    for (const auto &info: attributes) {
-        if (info.attrName.length() > ATTRNAME_MAX_LEN) {
+bool DatabaseHandle::_checkAttrInfo(const std::vector<AttrInfo> &attributes) {
+    for ( const auto &info: attributes ) {
+        if ( info.attrName.length() > ATTRNAME_MAX_LEN ) {
             return false;
         }
         
-        if (info.isForeign) {
-            if (_tableNames.find(info.foreignTb) == _tableNames.end()) {  //如果不存在这个表
+        if ( info.isForeign ) {
+            if ( _tableNames.find(info.foreignTb) == _tableNames.end()) {  //如果不存在这个表
                 return false;
             }
             
-            if (_tableHandles.find(info.foreignTb) == _tableHandles.end()) {    //打开这个表
+            if ( _tableHandles.find(info.foreignTb) == _tableHandles.end()) {    //打开这个表
                 _tableHandles.emplace(std::piecewise_construct,
                                       std::forward_as_tuple(info.foreignTb),
                                       std::forward_as_tuple(_dbName, info.foreignTb, _rm, _ix));
             }
             
             AttrInfo p = _tableHandles.at(info.foreignTb).getPrimaryKey();
-            if (p.attrName != info.foreignIndex || p.attrType != info.attrType || p.attrLength != info.attrLength) {
+            if ( p.attrName != info.foreignIndex || p.attrType != info.attrType || p.attrLength != info.attrLength ) {
                 return false;
             }
         }
@@ -129,31 +124,30 @@ bool DatabaseHandle::_checkAttrInfo(const std::vector<AttrInfo> &attributes)
     return true;
 }
 
-int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo> &attributes)
-{
+int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo> &attributes) {
     //first process the attributions
-    for (auto &at: attributes) {
-        if (at.isPrimary || at.isForeign) {
+    for ( auto &at: attributes ) {
+        if ( at.isPrimary || at.isForeign ) {
             at.isIndex = true;
         }
         
-        if (at.attrType == INT || at.attrType == FLOAT) {
+        if ( at.attrType == INT || at.attrType == FLOAT ) {
             at.attrLength = 4;
         }
     }
     
-    if (!_open) {
+    if ( !_open ) {
         printf("dbHandle: table bot open!\n");
         return -1;
     }
     
     auto find = _tableNames.find(relName);
-    if (find != _tableNames.end()) {
+    if ( find != _tableNames.end()) {
         printf("dbHandle: table already exists!\n");
         return -1;
     }
     
-    if (!_checkAttrInfo(attributes)) {
+    if ( !_checkAttrInfo(attributes)) {
         printf("dbHandle: attributes format error(maybe foreign key)\n");
         return -1;
     }
@@ -166,15 +160,14 @@ int DatabaseHandle::createTable(const std::string &relName, std::vector<AttrInfo
     return 0;
 }
 
-int DatabaseHandle::dropTable(const std::string &relName)
-{
-    if (!_open) {
+int DatabaseHandle::dropTable(const std::string &relName) {
+    if ( !_open ) {
         printf("database not open!\n");
         return -1;
     }
     
     auto find = _tableNames.find(relName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: table not exists!\n");
         return -1;
     }
@@ -186,21 +179,20 @@ int DatabaseHandle::dropTable(const std::string &relName)
     return 0;
 }
 
-int DatabaseHandle::createIndex(const std::string &relName, const std::string &attrName)
-{
-    if (!_open) {
+int DatabaseHandle::createIndex(const std::string &relName, const std::string &attrName) {
+    if ( !_open ) {
         printf("dbHandle: database not open\n");
         return -1;
     }
     
     auto find = _tableNames.find(relName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: table not exists!\n");
         return -1;
     }
     
     auto openFind = _tableHandles.find(relName);
-    if (openFind == _tableHandles.end()) {
+    if ( openFind == _tableHandles.end()) {
         _tableHandles.emplace(std::piecewise_construct,
                               std::forward_as_tuple(relName),
                               std::forward_as_tuple(_dbName, relName, _rm, _ix));
@@ -210,16 +202,15 @@ int DatabaseHandle::createIndex(const std::string &relName, const std::string &a
     return result;
 }
 
-int DatabaseHandle::dropIndex(const std::string &relName, const std::string &attrName)
-{
+int DatabaseHandle::dropIndex(const std::string &relName, const std::string &attrName) {
     auto find = _tableNames.find(relName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: database not exists!\n");
         return -1;
     }
     
     auto openFind = _tableHandles.find(relName);
-    if (openFind == _tableHandles.end()) {
+    if ( openFind == _tableHandles.end()) {
         _tableHandles.emplace(std::piecewise_construct,
                               std::forward_as_tuple(relName),
                               std::forward_as_tuple(_dbName, relName, _rm, _ix));
@@ -246,21 +237,19 @@ int DatabaseHandle::load(std::string &relName, std::string &filename)
     return result;
 }*/
 
-DatabaseHandle::~DatabaseHandle()
-{
-    if (_open) close();
+DatabaseHandle::~DatabaseHandle() {
+    if ( _open ) close();
 }
 
-std::vector<AttrInfo> DatabaseHandle::getRecordInfo(const std::string &tbName)
-{
+std::vector<AttrInfo> DatabaseHandle::getRecordInfo(const std::string &tbName) {
     auto find = _tableNames.find(tbName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: table not exists!\n");
         return std::vector<AttrInfo>();
     }
     
     auto openFind = _tableHandles.find(tbName);
-    if (openFind == _tableHandles.end()) {
+    if ( openFind == _tableHandles.end()) {
         _tableHandles.emplace(std::piecewise_construct,
                               std::forward_as_tuple(tbName),
                               std::forward_as_tuple(_dbName, tbName, _rm, _ix));
@@ -274,42 +263,43 @@ void DatabaseHandle::insert(const std::string &tbName, const std::vector<std::ve
     std::vector<AttrInfo> attrInfo = getRecordInfo(tbName);
     
     std::vector<int> indexes;
-    for (int i = 0; i < attrInfo.size(); i++) {
-        if (attrInfo[i].isForeign) {
+    for ( int i = 0; i < attrInfo.size(); i++ ) {
+        if ( attrInfo[i].isForeign ) {
             indexes.push_back(i);
         }
     }
     
-    for (auto i: indexes) {
+    for ( auto i: indexes ) {
         _openTable(attrInfo[i].foreignTb);
     }
     
     int errorNum = 0;
-    for (auto &single_data: data) {
+    for ( auto &single_data: data ) {
         //_insertSingleData(tbName, single_data, offsets, indexes);
         bool foreignSuccess = true;
         int i;
-        for (i = 0; i < indexes.size(); i++) {
-            if (!_tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(single_data[indexes[i]].data.data())) {
+        for ( i = 0; i < indexes.size(); i++ ) {
+            if ( !_tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(single_data[indexes[i]].data.data())) {
                 foreignSuccess = false;
                 break;
             }
         }
         
-        if (foreignSuccess) {
+        if ( foreignSuccess ) {
             try {
                 _tableHandles.at(tbName).insert(single_data);
-            } catch (const Error &e) {
+            } catch ( const Error &e ) {
                 printf("%s", e.what());
-                if (e.getErrorType() == Error::INSERT_ERROR) {
-                    for (int i = 0; i < indexes.size(); i++) {
-                        _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(single_data[indexes[i]].data.data());
+                if ( e.getErrorType() == Error::INSERT_ERROR ) {
+                    for ( int i = 0; i < indexes.size(); i++ ) {
+                        _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(
+                                single_data[indexes[i]].data.data());
                     }
                 }
                 errorNum++;
             }
         } else {
-            for (i = i -1; i >= 0; i--) {
+            for ( i = i - 1; i >= 0; i-- ) {
                 _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(single_data[indexes[i]].data.data());
             }
             errorNum++;
@@ -321,7 +311,7 @@ void DatabaseHandle::insert(const std::string &tbName, const std::vector<std::ve
 
 void DatabaseHandle::del(const std::string &tbName, std::vector<WhereClause> &whereClause) {
     auto find = _tableNames.find(tbName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: table not exists!\n");
         return;
     }
@@ -332,43 +322,45 @@ void DatabaseHandle::del(const std::string &tbName, std::vector<WhereClause> &wh
     std::vector<RM_Record> records;
     _tableHandles.at(tbName).getWhereRecords(whereClause, records);
     
-    if (records.size() == 0) {
+    if ( records.size() == 0 ) {
         printf(">> delete 0 items\n");
         return;
     }
     
     std::vector<int> indexes, offsets;
     int offset = 0;
-    for (int i = 0; i < attrInfo.size(); i++) {
-        if (attrInfo[i].isForeign) {
+    for ( int i = 0; i < attrInfo.size(); i++ ) {
+        if ( attrInfo[i].isForeign ) {
             indexes.push_back(i);
             offsets.push_back(offset);
         }
         offset += attrInfo[i].attrLength;
     }
     
-    for (auto i: indexes) {
+    for ( auto i: indexes ) {
         _openTable(attrInfo[i].foreignTb);
     }
     
-    for (auto record: records) {
+    for ( auto record: records ) {
         try {
             _tableHandles.at(tbName).del(record);
-            for (int i = 0; i < indexes.size(); i++) {
-                _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(record._data.data() + RECORD_HEAD * 4 + offsets[i]);
+            for ( int i = 0; i < indexes.size(); i++ ) {
+                _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(
+                        record._data.data() + RECORD_HEAD * 4 + offsets[i]);
             }
-        } catch (const Error &e) {
+        } catch ( const Error &e ) {
             printf("%s", e.what());
-            if (e.getErrorType() == Error::DELETE_ERROR) {
+            if ( e.getErrorType() == Error::DELETE_ERROR ) {
                 continue;
             }
         }
     }
 }
 
-void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause) {
+void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> &whereClause,
+                            std::vector<SetClause> &setClause) {
     auto find = _tableNames.find(tbName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: table not exists!\n");
         return;
     }
@@ -378,10 +370,10 @@ void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> 
     //TODO _checkSetClause()
     
     std::vector<int> indexes, offsets;
-    for (auto &clause: setClause) {
+    for ( auto &clause: setClause ) {
         int offset = 0;
-        for (int i = 0; i < attrInfo.size(); i++) {
-            if (attrInfo[i].attrName == clause.col) {
+        for ( int i = 0; i < attrInfo.size(); i++ ) {
+            if ( attrInfo[i].attrName == clause.col ) {
                 indexes.push_back(i);
                 offsets.push_back(offset);
                 break;
@@ -394,38 +386,41 @@ void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> 
     std::vector<RM_Record> records;
     _tableHandles.at(tbName).getWhereRecords(whereClause, records);
     
-    if (records.size() == 0) {
+    if ( records.size() == 0 ) {
         printf(">>update 0 items\n");
         return;
     }
     
-    for (auto i : indexes) {
-        if (attrInfo[i].isForeign) {
+    for ( auto i : indexes ) {
+        if ( attrInfo[i].isForeign ) {
             _openTable(attrInfo[i].foreignTb);
         }
     }
     
     int errorNum = 0;
-    for (auto &record: records) {
+    for ( auto &record: records ) {
         int i = 0;
         bool success = true;
-        for (i = 0; i < setClause.size(); i++) {
-            if (attrInfo[indexes[i]].isForeign) {
-                success = _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
-                if (!success) break;
+        for ( i = 0; i < setClause.size(); i++ ) {
+            if ( attrInfo[indexes[i]].isForeign ) {
+                success = _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(
+                        record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
+                if ( !success ) break;
                 success = _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(setClause[i].value.c_str());
-                if (!success) {
-                    _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
+                if ( !success ) {
+                    _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(
+                            record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
                     break;
                 }
             }
         }
         
-        if (!success) {
+        if ( !success ) {
             printf("update not success!\n");
             for ( i = i - 1; i >= 0; i-- ) {
                 _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(setClause[i].value.c_str());
-                _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
+                _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(
+                        record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
             }
             errorNum++;
             continue;
@@ -433,7 +428,7 @@ void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> 
         
         try {
             _tableHandles.at(tbName).update(record, setClause, indexes, offsets);
-        } catch (const Error &e) {
+        } catch ( const Error &e ) {
             printf("%s", e.what());
             //assert never will occur bugs while update
             continue;
@@ -444,31 +439,28 @@ void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> 
 }
 
 void DatabaseHandle::select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll,
-                            std::vector<WhereClause> &whereClause)
-{
-    for (auto &tbName: tbList)
-    {
-      _openTable(tbName);
+                            std::vector<WhereClause> &whereClause) {
+    for ( auto &tbName: tbList ) {
+        _openTable(tbName);
     }
     
-    if (tbList.size() == 1) {
+    if ( tbList.size() == 1 ) {
         _tableHandles.at(tbList[0]).selectSingle(selector, selectAll, whereClause);
-    } else if (tbList.size() == 2) {
+    } else if ( tbList.size() == 2 ) {
         _selectDouble(tbList, selector, selectAll, whereClause);
     }
     //TODO multi table
 }
 
-void DatabaseHandle::_openTable(const std::string tbName)
-{
+void DatabaseHandle::_openTable(const std::string tbName) {
     auto find = _tableNames.find(tbName);
-    if (find == _tableNames.end()) {
+    if ( find == _tableNames.end()) {
         printf("dbHandle: table not exists!\n");
         return;
     }
     
     auto openFind = _tableHandles.find(tbName);
-    if (openFind == _tableHandles.end()) {
+    if ( openFind == _tableHandles.end()) {
         _tableHandles.emplace(std::piecewise_construct,
                               std::forward_as_tuple(tbName),
                               std::forward_as_tuple(_dbName, tbName, _rm, _ix));
@@ -479,9 +471,9 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
                                    std::vector<WhereClause> &whereClause) {
     //classify whereClause
     std::vector<WhereClause> where1, where2, whereCommon;
-    for (auto &clause: whereClause) {
-        if (clause.right.isVal || (clause.left.col.tbName == clause.right.col.tbName)) {
-            if (clause.left.col.tbName == tbList[0]) {
+    for ( auto &clause: whereClause ) {
+        if ( clause.right.isVal || (clause.left.col.tbName == clause.right.col.tbName)) {
+            if ( clause.left.col.tbName == tbList[0] ) {
                 where1.push_back(clause);
             } else {
                 where2.push_back(clause);
@@ -497,16 +489,16 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
     std::vector<int> sindexes1, sindexes2;
     std::vector<int> soffsets1, soffsets2;
     
-    if (selectAll) {
+    if ( selectAll ) {
         int offset = 0;
-        for (int i = 0;i < attrInfo1.size(); i++) {
+        for ( int i = 0; i < attrInfo1.size(); i++ ) {
             sindexes1.push_back(i);
             soffsets1.push_back(offset);
             offset += attrInfo1[i].attrLength;
         }
         
         offset = 0;
-        for (int i = 0; i < attrInfo2.size(); i++) {
+        for ( int i = 0; i < attrInfo2.size(); i++ ) {
             sindexes2.push_back(i);
             soffsets2.push_back(offset);
             offset += attrInfo2[i].attrLength;
@@ -550,11 +542,11 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
     _tableHandles.at(tbList[1]).getWhereRecords(where2, records2);
     
     std::vector<int> indexes1, indexes2, offsets1, offsets2;
-    for (auto &clause: whereCommon) {
-        if (clause.left.col.tbName == tbList[0]) {
+    for ( auto &clause: whereCommon ) {
+        if ( clause.left.col.tbName == tbList[0] ) {
             int offset = 0;
-            for (int i = 0; i < attrInfo1.size(); i++) {
-                if (attrInfo1[i].attrName == clause.left.col.indexName) {
+            for ( int i = 0; i < attrInfo1.size(); i++ ) {
+                if ( attrInfo1[i].attrName == clause.left.col.indexName ) {
                     indexes1.push_back(i);
                     offsets1.push_back(offset);
                 }
@@ -562,8 +554,8 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
             }
             
             offset = 0;
-            for (int i = 0; i < attrInfo2.size(); i++) {
-                if (attrInfo2[i].attrName == clause.right.col.indexName) {
+            for ( int i = 0; i < attrInfo2.size(); i++ ) {
+                if ( attrInfo2[i].attrName == clause.right.col.indexName ) {
                     indexes2.push_back(i);
                     offsets2.push_back(offset);
                 }
@@ -571,17 +563,17 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
             }
         } else {
             int offset = 0;
-            for (int i = 0; i < attrInfo1.size(); i++) {
-                if (attrInfo1[i].attrName == clause.right.col.indexName) {
+            for ( int i = 0; i < attrInfo1.size(); i++ ) {
+                if ( attrInfo1[i].attrName == clause.right.col.indexName ) {
                     indexes1.push_back(i);
                     offsets1.push_back(offset);
                 }
                 offset += attrInfo1[i].attrLength;
             }
-    
+            
             offset = 0;
-            for (int i = 0; i < attrInfo2.size(); i++) {
-                if (attrInfo2[i].attrName == clause.left.col.indexName) {
+            for ( int i = 0; i < attrInfo2.size(); i++ ) {
+                if ( attrInfo2[i].attrName == clause.left.col.indexName ) {
                     indexes2.push_back(i);
                     offsets2.push_back(offset);
                 }
@@ -593,8 +585,8 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
     int clauseIndex = -1;
     WhereClause finalClause;
     int point = -1; //估值, == 10, < or > 5
-    for (int i = 0; i < whereCommon.size(); i++) {
-        if (whereCommon[i].comOp == EQ_OP) {
+    for ( int i = 0; i < whereCommon.size(); i++ ) {
+        if ( whereCommon[i].comOp == EQ_OP ) {
             finalClause = whereCommon[i];
             clauseIndex = i;
             point = 10;
@@ -607,12 +599,12 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
 //        }
     }
     
-    if (clauseIndex == -1) {
-        for (auto &record1: records1) {
-            for (auto &record2: records2) {
+    if ( clauseIndex == -1 ) {
+        for ( auto &record1: records1 ) {
+            for ( auto &record2: records2 ) {
                 bool satisfy = true;
-                for (int i = 0; i < indexes1.size(); i++) {
-                    if (whereCommon[i].left.col.tbName == tbList[0]) {
+                for ( int i = 0; i < indexes1.size(); i++ ) {
+                    if ( whereCommon[i].left.col.tbName == tbList[0] ) {
                         if ( !TypeCompWithComOp(record1._data.data() + RECORD_HEAD * 4 + offsets1[i],
                                                 record2._data.data() + RECORD_HEAD * 4 + offsets2[i],
                                                 attrInfo1[indexes1[i]].attrType,
@@ -632,25 +624,26 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
                         }
                     }
                 }
-                if (satisfy) {
+                if ( satisfy ) {
                     data.emplace_back();
-                    for ( int i = 0; i < sindexes1.size(); i++ )
-                    {
-                        data[data.size() - 1].push_back(record1._data.substr(RECORD_HEAD * 4 + soffsets1[i], attrInfo1[sindexes1[i]].attrLength));
+                    for ( int i = 0; i < sindexes1.size(); i++ ) {
+                        data[data.size() - 1].push_back(record1._data.substr(RECORD_HEAD * 4 + soffsets1[i],
+                                                                             attrInfo1[sindexes1[i]].attrLength));
                     }
-                    for ( int i = 0; i < sindexes2.size(); i++ )
-                    {
-                        data[data.size() - 1].push_back(record2._data.substr(RECORD_HEAD * 4 + soffsets2[i], attrInfo2[sindexes2[i]].attrLength));
+                    for ( int i = 0; i < sindexes2.size(); i++ ) {
+                        data[data.size() - 1].push_back(record2._data.substr(RECORD_HEAD * 4 + soffsets2[i],
+                                                                             attrInfo2[sindexes2[i]].attrLength));
                     }
                 }
             }
         }
     } else {
         std::map<std::string, std::vector<int>> tbMap;
-        for (int i = 0; i < records2.size(); i++) {
-            std::string tem = records2[i]._data.substr(RECORD_HEAD * 4 + offsets2[clauseIndex], attrInfo2[indexes2[clauseIndex]].attrLength);
+        for ( int i = 0; i < records2.size(); i++ ) {
+            std::string tem = records2[i]._data.substr(RECORD_HEAD * 4 + offsets2[clauseIndex],
+                                                       attrInfo2[indexes2[clauseIndex]].attrLength);
             auto find = tbMap.find(tem);
-            if (find == tbMap.end()) {
+            if ( find == tbMap.end()) {
                 tbMap.emplace(std::piecewise_construct,
                               std::forward_as_tuple(tem),
                               std::forward_as_tuple());
@@ -658,17 +651,18 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
             tbMap.at(tem).push_back(i);
         }
         
-        for (auto record: records1) {
-            std::string tem = record._data.substr(RECORD_HEAD * 4 + offsets1[clauseIndex], attrInfo1[indexes1[clauseIndex]].attrLength);
+        for ( auto record: records1 ) {
+            std::string tem = record._data.substr(RECORD_HEAD * 4 + offsets1[clauseIndex],
+                                                  attrInfo1[indexes1[clauseIndex]].attrLength);
             auto find = tbMap.find(tem);
-            if (find == tbMap.end()) {
+            if ( find == tbMap.end()) {
                 continue;
             }
             
-            for (auto i: tbMap.at(tem)) {
+            for ( auto i: tbMap.at(tem)) {
                 bool satisfy = true;
-                for (int j = 0; j < indexes1.size(); j++) {
-                    if (whereCommon[j].left.col.tbName == tbList[0]) {
+                for ( int j = 0; j < indexes1.size(); j++ ) {
+                    if ( whereCommon[j].left.col.tbName == tbList[0] ) {
                         if ( !TypeCompWithComOp(record._data.data() + RECORD_HEAD * 4 + offsets1[j],
                                                 records2[i]._data.data() + RECORD_HEAD * 4 + offsets2[j],
                                                 attrInfo1[indexes1[j]].attrType,
@@ -688,15 +682,15 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
                         }
                     }
                 }
-                if (satisfy) {
+                if ( satisfy ) {
                     data.emplace_back();
-                    for ( int j = 0; j < sindexes1.size(); j++ )
-                    {
-                        data[data.size() - 1].push_back(record._data.substr(RECORD_HEAD * 4 + soffsets1[j], attrInfo1[sindexes1[j]].attrLength));
+                    for ( int j = 0; j < sindexes1.size(); j++ ) {
+                        data[data.size() - 1].push_back(record._data.substr(RECORD_HEAD * 4 + soffsets1[j],
+                                                                            attrInfo1[sindexes1[j]].attrLength));
                     }
-                    for ( int j = 0; j < sindexes2.size(); j++ )
-                    {
-                        data[data.size() - 1].push_back(records2[i]._data.substr(RECORD_HEAD * 4 + soffsets2[j], attrInfo2[sindexes2[j]].attrLength));
+                    for ( int j = 0; j < sindexes2.size(); j++ ) {
+                        data[data.size() - 1].push_back(records2[i]._data.substr(RECORD_HEAD * 4 + soffsets2[j],
+                                                                                 attrInfo2[sindexes2[j]].attrLength));
                     }
                 }
             }
@@ -707,38 +701,36 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
     std::string splitLine;
     splitLine.assign(80, '=');
     printf("%s\n", splitLine.c_str());
-    for ( auto &i : sindexes1 )
-    {
+    for ( auto &i : sindexes1 ) {
         printf("%s\t", attrInfo1[i].attrName.c_str());
     }
     
-    for ( auto &i : sindexes2 )
-    {
+    for ( auto &i : sindexes2 ) {
         printf("%s\t", attrInfo2[i].attrName.c_str());
     }
-
+    
     printf("\n");
     printf("%s\n", splitLine.c_str());
     
-    for (auto r: data) {
+    for ( auto r: data ) {
         int i = 0;
-        for (i = 0; i < sindexes1.size(); i++) {
-            if (attrInfo1[sindexes1[i]].attrType == INT) {
-                int *t = (int*)(r[i].c_str());
+        for ( i = 0; i < sindexes1.size(); i++ ) {
+            if ( attrInfo1[sindexes1[i]].attrType == INT ) {
+                int *t = (int *) (r[i].c_str());
                 printf("%d\t", t[0]);
-            } else if (attrInfo1[sindexes1[i]].attrType == FLOAT) {
-                float *t = (float*)(r[i].c_str());
+            } else if ( attrInfo1[sindexes1[i]].attrType == FLOAT ) {
+                auto t = (float *) (r[i].c_str());
                 printf("%.2f\t", t[0]);
             } else {
                 printf("%s\t", r[i].c_str());
             }
         }
-        for (int j = 0; j < sindexes2.size(); j++, i++) {
-            if (attrInfo2[sindexes2[j]].attrType == INT) {
-                int *t = (int*)(r[i].c_str());
+        for ( int j = 0; j < sindexes2.size(); j++, i++ ) {
+            if ( attrInfo2[sindexes2[j]].attrType == INT ) {
+                auto t = (int *) (r[i].c_str());
                 printf("%d\t", t[0]);
-            } else if (attrInfo2[sindexes2[j]].attrType == FLOAT) {
-                float *t = (float*)(r[i].c_str());
+            } else if ( attrInfo2[sindexes2[j]].attrType == FLOAT ) {
+                auto t = (float *) (r[i].c_str());
                 printf("%.2f\t", t[0]);
             } else {
                 printf("%s\t", r[i].c_str());
@@ -748,5 +740,5 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
     }
     
     printf("%s\n", splitLine.c_str());
-    
+    printf("select %lu lines\n", data.size());
 }

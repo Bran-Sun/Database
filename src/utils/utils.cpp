@@ -93,22 +93,20 @@ bool compFloat(const void *p1, const void *p2, ComOp op, int attrlength)
 
 bool compString(const void *p1, const void *p2, ComOp op, int attrlength)
 {
-    std::string value((char*)p1, attrlength);
-    std::string compData((char*)p2, attrlength);
-    
+    int res = strncmp((char*)p1, (char*)p2, attrlength);
     switch (op) {
         case EQ_OP:
-            return value == compData;
+            return res == 0;
         case LT_OP:
-            return value < compData;
+            return res < 0;
         case GT_OP:
-            return value > compData;
+            return res > 0;
         case LE_OP:
-            return value <= compData;
+            return res <= 0;
         case GE_OP:
-            return value >= compData;
+            return res >= 0;
         case NE_OP:
-            return value != compData;
+            return res != 0;
         case NO_OP:
             return true;
     }

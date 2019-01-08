@@ -401,8 +401,18 @@ void TableHandle::update(std::vector<WhereClause> &whereClause, std::vector<SetC
             if (_attributions[index].isIndex) {
                 _ixHandles.at(_attributions[index].attrName).deleteEntry(record._data.c_str() + offset + 4 * RECORD_HEAD, record.getRID());
             }
+            
             record._data.replace(offset + 4 * RECORD_HEAD, _attributions[index].attrLength, std::string()); //for clear()
-            record._data.replace(offset + 4 * RECORD_HEAD, _attributions[index].attrLength, clause.value);
+            //record._data.replace(offset + 4 * RECORD_HEAD, _attributions[index].attrLength, clause.value);
+            if (_attributions[index].attrType == INT || _attributions[index].attrType == FLOAT) {
+                record._data.replace(offset + 4 * RECORD_HEAD, _attributions[index].attrLength, clause.value);
+            } else if (_attributions[index].attrLength < clause.value.size()) {
+                printf("can't match: %d\n", index);
+                printf("this data is too long!\n");
+            } else {
+                record._data.replace(offset + 4 * RECORD_HEAD, clause.value.size(), clause.value);
+            }
+            
             if (_attributions[index].isIndex) {
                 _ixHandles.at(_attributions[index].attrName).insertEntry(record._data.c_str() + offset + 4 * RECORD_HEAD, record.getRID());
             }
@@ -477,6 +487,7 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
         RM_Record recordIn;
     
         while (iter.getNextRecord(recordIn) != -1) {
+            //printf("iter one!\n");
             if (_checkWhereClause(recordIn, whereClause)) {
                 data.emplace_back();
                 if (selectAll) {
@@ -566,6 +577,7 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
     }
     
     printf("%s\n", splitLine.c_str());
+    printf("select %lu lines\n", data.size());
 }
 
 void TableHandle::insert(const std::vector<DataAttr> &data)
