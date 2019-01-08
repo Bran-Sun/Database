@@ -17,6 +17,7 @@
 #include "../ixmanager/IX_Manager.h"
 #include "TableHandle.h"
 #include "../Error/Error.h"
+#include "../utils/pagedef.h"
 
 #define MAX_TABLE_NUM 32
 
@@ -57,6 +58,7 @@ public:
     ~DatabaseHandle();
     
 public:
+    void _selectDouble(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     void _modifyDBFile();
     bool _checkAttrInfo(const std::vector<AttrInfo> &attributes);
     void _openTable(const std::string tbName);

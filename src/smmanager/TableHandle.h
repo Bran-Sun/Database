@@ -38,10 +38,11 @@ public:
     void del(std::vector<WhereClause> &whereClause);
     void del(RM_Record &record);
     void update(std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause);
+    void update(RM_Record &record, std::vector<SetClause> &setClause, std::vector<int> &indexes, std::vector<int> &offsets);
     void selectSingle(std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     
-    bool addForeign(const std::string &key);
-    bool delForeign(const std::string &key);
+    bool addForeign(const char *key);
+    bool delForeign(const char *key);
     
     bool checkWhereValid(std::vector<WhereClause> &whereClause);
     bool getWhereRecords(std::vector<WhereClause> &whereClause, std::vector<RM_Record> &records);

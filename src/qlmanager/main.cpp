@@ -94,9 +94,15 @@ int main() {
                             );
     
     std::string foreignTest2("DELETE FROM restaurant WHERE id = 1002;\n");
-    std::string foreignTest3("INSERT INTO `food` VALUES (200030,1001,'Boiled dumplings',64.0236),(200031,1001,'Waffles',80.5322);\n"
-    );
+    std::string foreignTest3("INSERT INTO `food` VALUES (200030,1001,'Boiled dumplings',64.0236),(200031,1001,'Waffles',80.5322);\n");
+    std::string foreignTest4("UPDATE food SET restaurant_id = 1002 WHERE id=200001;\n"
+                             "SELECT * FROM food WHERE id > 0;\n");
+    std::string foreignTest5("SELECT * FROM restaurant WHERE id > 0;\n");
     std::string universe("SELECT * FROM restaurant WHERE id < 10000;\n");
+    
+    std::string doubleSelect("SELECT * FROM restaurant WHERE id < 10000;\n"
+                             "SELECT * FROM food WHERE id > 0;\n"
+            "SELECT * FROM restaurant, food WHERE food.restaurant_id > 0;\n");
     
     std::ifstream fin("customer.sql");
     std::string insertCustomer;
@@ -120,7 +126,7 @@ int main() {
     
     using namespace parser;
     Parser par;
-    std::vector<std::shared_ptr<Action>> actions = par.parse(initCommand + foreignTest);
+    std::vector<std::shared_ptr<Action>> actions = par.parse(useCommand + insertOrders);
     
     clock_t start, end;
     start = clock();

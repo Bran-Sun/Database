@@ -290,7 +290,7 @@ void DatabaseHandle::insert(const std::string &tbName, const std::vector<std::ve
         bool foreignSuccess = true;
         int i;
         for (i = 0; i < indexes.size(); i++) {
-            if (!_tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(single_data[indexes[i]].data)) {
+            if (!_tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(single_data[indexes[i]].data.data())) {
                 foreignSuccess = false;
                 break;
             }
@@ -303,14 +303,14 @@ void DatabaseHandle::insert(const std::string &tbName, const std::vector<std::ve
                 printf("%s", e.what());
                 if (e.getErrorType() == Error::INSERT_ERROR) {
                     for (int i = 0; i < indexes.size(); i++) {
-                        _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(single_data[indexes[i]].data);
+                        _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(single_data[indexes[i]].data.data());
                     }
                 }
                 errorNum++;
             }
         } else {
             for (i = i -1; i >= 0; i--) {
-                _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(single_data[indexes[i]].data);
+                _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(single_data[indexes[i]].data.data());
             }
             errorNum++;
         }
@@ -367,9 +367,80 @@ void DatabaseHandle::del(const std::string &tbName, std::vector<WhereClause> &wh
 }
 
 void DatabaseHandle::update(const std::string &tbName, std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause) {
-    
+    auto find = _tableNames.find(tbName);
+    if (find == _tableNames.end()) {
+        printf("dbHandle: table not exists!\n");
+        return;
+    }
     _openTable(tbName);
-    _tableHandles.at(tbName).update(whereClause, setClause);
+    
+    std::vector<AttrInfo> attrInfo = getRecordInfo(tbName);
+    //TODO _checkSetClause()
+    
+    std::vector<int> indexes, offsets;
+    for (auto &clause: setClause) {
+        int offset = 0;
+        for (int i = 0; i < attrInfo.size(); i++) {
+            if (attrInfo[i].attrName == clause.col) {
+                indexes.push_back(i);
+                offsets.push_back(offset);
+                break;
+            }
+            offset += attrInfo[i].attrLength;
+        }
+    }
+    
+    _tableHandles.at(tbName).checkWhereValid(whereClause);
+    std::vector<RM_Record> records;
+    _tableHandles.at(tbName).getWhereRecords(whereClause, records);
+    
+    if (records.size() == 0) {
+        printf(">>update 0 items\n");
+        return;
+    }
+    
+    for (auto i : indexes) {
+        if (attrInfo[i].isForeign) {
+            _openTable(attrInfo[i].foreignTb);
+        }
+    }
+    
+    int errorNum = 0;
+    for (auto &record: records) {
+        int i = 0;
+        bool success = true;
+        for (i = 0; i < setClause.size(); i++) {
+            if (attrInfo[indexes[i]].isForeign) {
+                success = _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
+                if (!success) break;
+                success = _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(setClause[i].value.c_str());
+                if (!success) {
+                    _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
+                    break;
+                }
+            }
+        }
+        
+        if (!success) {
+            printf("update not success!\n");
+            for ( i = i - 1; i >= 0; i-- ) {
+                _tableHandles.at(attrInfo[indexes[i]].foreignTb).delForeign(setClause[i].value.c_str());
+                _tableHandles.at(attrInfo[indexes[i]].foreignTb).addForeign(record._data.c_str() + RECORD_HEAD * 4 + offsets[i]);
+            }
+            errorNum++;
+            continue;
+        }
+        
+        try {
+            _tableHandles.at(tbName).update(record, setClause, indexes, offsets);
+        } catch (const Error &e) {
+            printf("%s", e.what());
+            //assert never will occur bugs while update
+            continue;
+        }
+    }
+    
+    printf(">>update %lu items\n", records.size() - errorNum);
 }
 
 void DatabaseHandle::select(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll,
@@ -377,25 +448,13 @@ void DatabaseHandle::select(std::vector<std::string> &tbList, std::vector<Col> &
 {
     for (auto &tbName: tbList)
     {
-        auto find = _tableNames.find(tbName);
-        if ( find == _tableNames.end())
-        {
-            printf("dbHandle: table not exists!\n");
-            return;
-        }
-    
-        auto openFind = _tableHandles.find(tbName);
-        if ( openFind == _tableHandles.end())
-        {
-            _tableHandles.emplace(std::piecewise_construct,
-                                  std::forward_as_tuple(tbName),
-                                  std::forward_as_tuple(_dbName, tbName, _rm, _ix));
-        }
+      _openTable(tbName);
     }
     
-    if (tbList.size() == 1)
-    {
+    if (tbList.size() == 1) {
         _tableHandles.at(tbList[0]).selectSingle(selector, selectAll, whereClause);
+    } else if (tbList.size() == 2) {
+        _selectDouble(tbList, selector, selectAll, whereClause);
     }
     //TODO multi table
 }
@@ -414,4 +473,280 @@ void DatabaseHandle::_openTable(const std::string tbName)
                               std::forward_as_tuple(tbName),
                               std::forward_as_tuple(_dbName, tbName, _rm, _ix));
     }
+}
+
+void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll,
+                                   std::vector<WhereClause> &whereClause) {
+    //classify whereClause
+    std::vector<WhereClause> where1, where2, whereCommon;
+    for (auto &clause: whereClause) {
+        if (clause.right.isVal || (clause.left.col.tbName == clause.right.col.tbName)) {
+            if (clause.left.col.tbName == tbList[0]) {
+                where1.push_back(clause);
+            } else {
+                where2.push_back(clause);
+            }
+        } else {
+            whereCommon.push_back(clause);
+        }
+    }
+    
+    std::vector<AttrInfo> attrInfo1 = getRecordInfo(tbList[0]);
+    std::vector<AttrInfo> attrInfo2 = getRecordInfo(tbList[1]);
+    
+    std::vector<int> sindexes1, sindexes2;
+    std::vector<int> soffsets1, soffsets2;
+    
+    if (selectAll) {
+        int offset = 0;
+        for (int i = 0;i < attrInfo1.size(); i++) {
+            sindexes1.push_back(i);
+            soffsets1.push_back(offset);
+            offset += attrInfo1[i].attrLength;
+        }
+        
+        offset = 0;
+        for (int i = 0; i < attrInfo2.size(); i++) {
+            sindexes2.push_back(i);
+            soffsets2.push_back(offset);
+            offset += attrInfo2[i].attrLength;
+        }
+    } else {
+        for ( auto &col: selector ) {
+            if ( col.tbName == tbList[0] ) {
+                int offset = 0;
+                for ( int i = 0; i < attrInfo1.size(); i++ ) {
+                    if ( attrInfo1[i].attrName == col.indexName ) {
+                        sindexes1.push_back(i);
+                        soffsets1.push_back(offset);
+                        break;
+                    } else {
+                        offset += attrInfo1[i].attrLength;
+                    }
+                }
+            } else {
+                int offset = 0;
+                for ( int i = 0; i < attrInfo2.size(); i++ ) {
+                    if ( attrInfo2[i].attrName == col.indexName ) {
+                        sindexes2.push_back(i);
+                        soffsets2.push_back(offset);
+                        break;
+                    } else {
+                        offset += attrInfo2[i].attrLength;
+                    }
+                }
+            }
+        }
+    }
+    
+    std::vector<std::vector<std::string>> data;
+    
+    _tableHandles.at(tbList[0]).checkWhereValid(where1);
+    std::vector<RM_Record> records1;
+    _tableHandles.at(tbList[0]).getWhereRecords(where1, records1);
+    
+    _tableHandles.at(tbList[1]).checkWhereValid(where2);
+    std::vector<RM_Record> records2;
+    _tableHandles.at(tbList[1]).getWhereRecords(where2, records2);
+    
+    std::vector<int> indexes1, indexes2, offsets1, offsets2;
+    for (auto &clause: whereCommon) {
+        if (clause.left.col.tbName == tbList[0]) {
+            int offset = 0;
+            for (int i = 0; i < attrInfo1.size(); i++) {
+                if (attrInfo1[i].attrName == clause.left.col.indexName) {
+                    indexes1.push_back(i);
+                    offsets1.push_back(offset);
+                }
+                offset += attrInfo1[i].attrLength;
+            }
+            
+            offset = 0;
+            for (int i = 0; i < attrInfo2.size(); i++) {
+                if (attrInfo2[i].attrName == clause.right.col.indexName) {
+                    indexes2.push_back(i);
+                    offsets2.push_back(offset);
+                }
+                offset += attrInfo2[i].attrLength;
+            }
+        } else {
+            int offset = 0;
+            for (int i = 0; i < attrInfo1.size(); i++) {
+                if (attrInfo1[i].attrName == clause.right.col.indexName) {
+                    indexes1.push_back(i);
+                    offsets1.push_back(offset);
+                }
+                offset += attrInfo1[i].attrLength;
+            }
+    
+            offset = 0;
+            for (int i = 0; i < attrInfo2.size(); i++) {
+                if (attrInfo2[i].attrName == clause.left.col.indexName) {
+                    indexes2.push_back(i);
+                    offsets2.push_back(offset);
+                }
+                offset += attrInfo2[i].attrLength;
+            }
+        }
+    }
+    
+    int clauseIndex = -1;
+    WhereClause finalClause;
+    int point = -1; //估值, == 10, < or > 5
+    for (int i = 0; i < whereCommon.size(); i++) {
+        if (whereCommon[i].comOp == EQ_OP) {
+            finalClause = whereCommon[i];
+            clauseIndex = i;
+            point = 10;
+        }
+//        else if (whereCommon[i].comOp == GE_OP || whereCommon[i].comOp == GT_OP || whereCommon[i].comOp == LE_OP || whereCommon[i].comOp == LT_OP ) {
+//            if (point < 5) {
+//                point = 5;
+//                clauseIndex = i;
+//            }
+//        }
+    }
+    
+    if (clauseIndex == -1) {
+        for (auto &record1: records1) {
+            for (auto &record2: records2) {
+                bool satisfy = true;
+                for (int i = 0; i < indexes1.size(); i++) {
+                    if (whereCommon[i].left.col.tbName == tbList[0]) {
+                        if ( !TypeCompWithComOp(record1._data.data() + RECORD_HEAD * 4 + offsets1[i],
+                                                record2._data.data() + RECORD_HEAD * 4 + offsets2[i],
+                                                attrInfo1[indexes1[i]].attrType,
+                                                whereCommon[i].comOp,
+                                                attrInfo1[indexes1[i]].attrLength)) {
+                            satisfy = false;
+                            break;
+                        }
+                    } else {
+                        if ( !TypeCompWithComOp(record2._data.data() + RECORD_HEAD * 4 + offsets2[i],
+                                                record1._data.data() + RECORD_HEAD * 4 + offsets1[i],
+                                                attrInfo1[indexes1[i]].attrType,
+                                                whereCommon[i].comOp,
+                                                attrInfo1[indexes1[i]].attrLength)) {
+                            satisfy = false;
+                            break;
+                        }
+                    }
+                }
+                if (satisfy) {
+                    data.emplace_back();
+                    for ( int i = 0; i < sindexes1.size(); i++ )
+                    {
+                        data[data.size() - 1].push_back(record1._data.substr(RECORD_HEAD * 4 + soffsets1[i], attrInfo1[sindexes1[i]].attrLength));
+                    }
+                    for ( int i = 0; i < sindexes2.size(); i++ )
+                    {
+                        data[data.size() - 1].push_back(record2._data.substr(RECORD_HEAD * 4 + soffsets2[i], attrInfo2[sindexes2[i]].attrLength));
+                    }
+                }
+            }
+        }
+    } else {
+        std::map<std::string, std::vector<int>> tbMap;
+        for (int i = 0; i < records2.size(); i++) {
+            std::string tem = records2[i]._data.substr(RECORD_HEAD * 4 + offsets2[clauseIndex], attrInfo2[indexes2[clauseIndex]].attrLength);
+            auto find = tbMap.find(tem);
+            if (find == tbMap.end()) {
+                tbMap.emplace(std::piecewise_construct,
+                              std::forward_as_tuple(tem),
+                              std::forward_as_tuple());
+            }
+            tbMap.at(tem).push_back(i);
+        }
+        
+        for (auto record: records1) {
+            std::string tem = record._data.substr(RECORD_HEAD * 4 + offsets1[clauseIndex], attrInfo1[indexes1[clauseIndex]].attrLength);
+            auto find = tbMap.find(tem);
+            if (find == tbMap.end()) {
+                continue;
+            }
+            
+            for (auto i: tbMap.at(tem)) {
+                bool satisfy = true;
+                for (int j = 0; j < indexes1.size(); j++) {
+                    if (whereCommon[j].left.col.tbName == tbList[0]) {
+                        if ( !TypeCompWithComOp(record._data.data() + RECORD_HEAD * 4 + offsets1[j],
+                                                records2[i]._data.data() + RECORD_HEAD * 4 + offsets2[j],
+                                                attrInfo1[indexes1[j]].attrType,
+                                                whereCommon[j].comOp,
+                                                attrInfo1[indexes1[j]].attrLength)) {
+                            satisfy = false;
+                            break;
+                        }
+                    } else {
+                        if ( !TypeCompWithComOp(records2[i]._data.data() + RECORD_HEAD * 4 + offsets2[j],
+                                                record._data.data() + RECORD_HEAD * 4 + offsets1[j],
+                                                attrInfo1[indexes1[j]].attrType,
+                                                whereCommon[j].comOp,
+                                                attrInfo1[indexes1[j]].attrLength)) {
+                            satisfy = false;
+                            break;
+                        }
+                    }
+                }
+                if (satisfy) {
+                    data.emplace_back();
+                    for ( int j = 0; j < sindexes1.size(); j++ )
+                    {
+                        data[data.size() - 1].push_back(record._data.substr(RECORD_HEAD * 4 + soffsets1[j], attrInfo1[sindexes1[j]].attrLength));
+                    }
+                    for ( int j = 0; j < sindexes2.size(); j++ )
+                    {
+                        data[data.size() - 1].push_back(records2[i]._data.substr(RECORD_HEAD * 4 + soffsets2[j], attrInfo2[sindexes2[j]].attrLength));
+                    }
+                }
+            }
+        }
+    }
+    
+    //print the result
+    std::string splitLine;
+    splitLine.assign(80, '=');
+    printf("%s\n", splitLine.c_str());
+    for ( auto &i : sindexes1 )
+    {
+        printf("%s\t", attrInfo1[i].attrName.c_str());
+    }
+    
+    for ( auto &i : sindexes2 )
+    {
+        printf("%s\t", attrInfo2[i].attrName.c_str());
+    }
+
+    printf("\n");
+    printf("%s\n", splitLine.c_str());
+    
+    for (auto r: data) {
+        int i = 0;
+        for (i = 0; i < sindexes1.size(); i++) {
+            if (attrInfo1[sindexes1[i]].attrType == INT) {
+                int *t = (int*)(r[i].c_str());
+                printf("%d\t", t[0]);
+            } else if (attrInfo1[sindexes1[i]].attrType == FLOAT) {
+                float *t = (float*)(r[i].c_str());
+                printf("%.2f\t", t[0]);
+            } else {
+                printf("%s\t", r[i].c_str());
+            }
+        }
+        for (int j = 0; j < sindexes2.size(); j++, i++) {
+            if (attrInfo2[sindexes2[j]].attrType == INT) {
+                int *t = (int*)(r[i].c_str());
+                printf("%d\t", t[0]);
+            } else if (attrInfo2[sindexes2[j]].attrType == FLOAT) {
+                float *t = (float*)(r[i].c_str());
+                printf("%.2f\t", t[0]);
+            } else {
+                printf("%s\t", r[i].c_str());
+            }
+        }
+        printf("\n");
+    }
+    
+    printf("%s\n", splitLine.c_str());
+    
 }

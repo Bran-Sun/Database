@@ -630,9 +630,9 @@ void TableHandle::insert(const std::vector<DataAttr> &data)
     }
 }
 
-bool TableHandle::addForeign(const std::string &key) {
+bool TableHandle::addForeign(const char *key) {
     IX_IndexScan iter(_ixHandles.at(_primaryKey.attrName), _primaryKey.attrType, _primaryKey.attrLength,
-                      EQ_OP, key.c_str());
+                      EQ_OP, key);
     RID rid;
     RM_Record recordIn;
     if (iter.getNextEntry(rid) == -1) {
@@ -654,9 +654,9 @@ bool TableHandle::addForeign(const std::string &key) {
     return true;
 }
 
-bool TableHandle::delForeign(const std::string &key) {
+bool TableHandle::delForeign(const char *key) {
     IX_IndexScan iter(_ixHandles.at(_primaryKey.attrName), _primaryKey.attrType, _primaryKey.attrLength,
-                      EQ_OP, key.c_str());
+                      EQ_OP, key);
     RID rid;
     RM_Record recordIn;
     if (iter.getNextEntry(rid) == -1) {
@@ -676,5 +676,22 @@ bool TableHandle::delForeign(const std::string &key) {
     
     _rmHandle.updateRecord(recordIn);
     
-    return false;
+    return true;
+}
+
+void TableHandle::update(RM_Record &record, std::vector<SetClause> &setClause, std::vector<int> &indexes, std::vector<int> &offsets) {
+    for (int i = 0; i < setClause.size(); i++) {
+        printf("fuck: %d\n", *(int*)(record._data.c_str() + offsets[i] + 4 * RECORD_HEAD));
+        if ( _attributions[indexes[i]].isIndex ) {
+            _ixHandles.at(_attributions[indexes[i]].attrName).deleteEntry(record._data.c_str() + offsets[i] + 4 * RECORD_HEAD,
+                                                                     record.getRID());
+        }
+        record._data.replace(offsets[i] + 4 * RECORD_HEAD, _attributions[indexes[i]].attrLength, std::string()); //for clear()
+        record._data.replace(offsets[i] + 4 * RECORD_HEAD, _attributions[indexes[i]].attrLength, setClause[i].value);
+        if ( _attributions[indexes[i]].isIndex ) {
+            _ixHandles.at(_attributions[indexes[i]].attrName).insertEntry(record._data.c_str() + offsets[i] + 4 * RECORD_HEAD,
+                                                                     record.getRID());
+        }
+    }
+    _rmHandle.updateRecord(record);
 }

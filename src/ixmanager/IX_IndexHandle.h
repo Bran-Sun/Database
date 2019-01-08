@@ -51,7 +51,7 @@ private:
     int _insertKey(std::shared_ptr<BpNode> node, const void *pData, const RID &rid);
     int _insertInternalKey(std::shared_ptr<BpNode> parent, std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode> rc);
     int _getEmptyPage();
-    int _deleteKey(std::shared_ptr<BpNode> node);
+    int _deleteKey(std::shared_ptr<BpNode> node, int id);
 
 private:
     int _fileID;

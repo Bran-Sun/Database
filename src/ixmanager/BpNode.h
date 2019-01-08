@@ -55,7 +55,7 @@ public:
     void setParent(std::shared_ptr<BpNode> parent) { _parent = std::move(parent); }
     void initInsert(std::shared_ptr<BpNode> lc, std::shared_ptr<BpNode>rc, int attrlength);
     void insertInternalKey(std::shared_ptr<BpNode> node, int attrlength);
-    void deleteKey(BufType bt, int attrlength);
+    void deleteKey(BufType bt, int attrlength, int index);
     
     char* getLightKey(int nodeIndex, int attrLength) { //maybe not safe for other use
         if (!_terminal) {

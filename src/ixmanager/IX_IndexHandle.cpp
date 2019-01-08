@@ -207,7 +207,8 @@ int IX_IndexHandle::_delete(std::shared_ptr<BpNode> node, const void *pData, con
     
     _headerModify = true;
     _recordNumber--;
-    _deleteKey(cur);
+    printf("nIndex: %d\n", nIndex);
+    _deleteKey(cur, nIndex);
     
     return 0;
 }
@@ -320,12 +321,12 @@ int IX_IndexHandle::_getEmptyPage()
     }
 }
 
-int IX_IndexHandle::_deleteKey(std::shared_ptr<BpNode> node)
+int IX_IndexHandle::_deleteKey(std::shared_ptr<BpNode> node, int id)
 {
     int pageID = node->getPageID();
     int index;
     BufType bt = _bpm->getPage(_fileID, pageID, index, IX_PAGE_SIZE);
-    node->deleteKey(bt, _attrlength);
+    node->deleteKey(bt, _attrlength, id);
     node->write(bt, _attrlength);
     _bpm->markDirty(index);
     _modifyIndex.insert(index);
