@@ -12,6 +12,7 @@
 #include "../ixmanager/IX_IndexHandle.h"
 #include "../ixmanager/IX_IndexScan.h"
 #include "DataInfo.h"
+#include "../Error/Error.h"
 #include <map>
 
 class TableHandle
@@ -33,15 +34,22 @@ public:
     std::vector<AttrInfo> getAttributions() const { return _attributions; }
     
     void insert(const std::vector<std::vector<DataAttr>> &data);
+    void insert(const std::vector<DataAttr> &data);
     void del(std::vector<WhereClause> &whereClause);
+    void del(RM_Record &record);
     void update(std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause);
     void selectSingle(std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
     
+    bool addForeign(const std::string &key);
+    bool delForeign(const std::string &key);
+    
+    bool checkWhereValid(std::vector<WhereClause> &whereClause);
+    bool getWhereRecords(std::vector<WhereClause> &whereClause, std::vector<RM_Record> &records);
+
 private:
     void _openIndex();
     void _getPrimaryKey();
     bool _checkWhereClause(RM_Record &record, std::vector<WhereClause> &whereClause);
-    bool _checkWhereValid(std::vector<WhereClause> &whereClause);
     bool _checkSetValid(std::vector<SetClause> &setClause);
     void _modifyWhereClause(std::vector<WhereClause> &whereClause);
     

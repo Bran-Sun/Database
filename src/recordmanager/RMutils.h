@@ -6,7 +6,7 @@
 #define DATABASE_RMUTILS_H
 
 #define RECORD_HEAD 2
-#define RECOED_REFER 0
+#define RECORD_REFER 0
 #define RECORD_NULLBIT 1
 
 #endif //DATABASE_RMUTILS_H

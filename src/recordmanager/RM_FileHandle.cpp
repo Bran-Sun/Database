@@ -116,9 +116,10 @@ int RM_FileHandle::updateRecord(const RM_Record &record)
         printf("rm_handle: record not exist!\n");
         return 0;   //记录不存在
     }
-    
+    std::string tem = record._data.substr(0, 4);
+    int refer = *(int*)(tem.c_str());
     charp start = (charp)b + RM_HEADER_LEN * 4 + RECORD_MAP + slotID * _recordSize;
-    memcpy(start, record._data.c_str(), _recordSize);
+    memcpy(start, record._data.c_str(), (size_t)_recordSize);
     
     _bpm->markDirty(index);
     _modifyIndex.insert(index);

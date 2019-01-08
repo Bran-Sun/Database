@@ -16,6 +16,7 @@
 #include "../recordmanager/RM_Manager.h"
 #include "../ixmanager/IX_Manager.h"
 #include "TableHandle.h"
+#include "../Error/Error.h"
 
 #define MAX_TABLE_NUM 32
 
@@ -58,6 +59,7 @@ public:
 public:
     void _modifyDBFile();
     bool _checkAttrInfo(const std::vector<AttrInfo> &attributes);
+    void _openTable(const std::string tbName);
 
 private:
     bool _modifyDbf;

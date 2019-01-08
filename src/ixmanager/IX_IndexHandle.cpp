@@ -4,6 +4,15 @@
 
 #include "IX_IndexHandle.h"
 
+bool IX_IndexHandle::notInIndex(const void *key) const
+{
+    std::shared_ptr<BpNode> node = _findKey(key);
+    int index;
+    int result = node->findIndex(key, index, _attrType, _attrlength);
+    if (result == 0) return true;
+    else return false;
+}
+
 int IX_IndexHandle::insertEntry(const void *pData, const RID &rid)
 {
     std::shared_ptr<BpNode> node = _findKey(pData); //find most right node
@@ -342,6 +351,7 @@ std::shared_ptr<BpNode> IX_IndexHandle::getMiddleNode(int &index, const void *ke
     std::shared_ptr<BpNode> cur = _findKey(key);
     int result = cur->findIndex(key, index, _attrType, _attrlength);
     index++;
+    return cur;
 }
 
 std::shared_ptr<BpNode> IX_IndexHandle::getRightNode(int &index) const
@@ -379,7 +389,6 @@ int IX_IndexHandle::getFrontNextItem(std::shared_ptr<BpNode> &node, int &nodeInd
 int IX_IndexHandle::getBackNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const
 {
     nodeIndex--;
-    printf("nodeIndex: %d\n", nodeIndex);
     while (nodeIndex < 0) {
         int nextPageID = node->getPrePage();
         if (nextPageID == 0) return -1;

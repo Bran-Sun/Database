@@ -6,6 +6,8 @@
 #define DATABASE_RID_H
 
 
+#include <cstdio>
+
 class RID
 {
 private:
@@ -33,6 +35,10 @@ public:
     
     bool equal(RID b) {
         return _pageID == b._pageID && _slotID == b._slotID;
+    }
+    
+    void print() {
+        printf("rid: %d, %d\n", _pageID, _slotID);
     }
 };
 

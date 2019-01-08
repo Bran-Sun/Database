@@ -224,23 +224,42 @@ void TableHandle::insert(const std::vector<std::vector<DataAttr>> &data)
     }
 }
 
+void TableHandle::del(RM_Record &record) {
+    std::string tem = record._data.substr(RECORD_REFER * 4, 4);
+    int refer = *(int*)(tem.c_str());
+    printf("reference: %d\n", refer);
+    if (refer > 0) {
+        throw Error("Record cannot be delete, you need to delete foreignKey first!\n", Error::DELETE_ERROR);
+    }
+    RID rid = record.getRID();
+    _rmHandle.deleteRecord(rid);
+    const char *head = record._data.c_str();
+    int offset = 0;
+    for ( int i = 0; i < _attributions.size(); i++ )
+    {
+        if ( _attributions[i].isIndex)
+        {
+            _ixHandles.at(_attributions[i].attrName).deleteEntry(head + RECORD_HEAD * 4 + offset, record.getRID());
+        }
+        offset += _attributions[i].attrLength;
+    }
+}
 
 void TableHandle::del(std::vector<WhereClause> &whereClause) {
-    _checkWhereValid(whereClause);
+    checkWhereValid(whereClause);
     
     std::vector<RM_Record> records;
-    int recordSize = _rmHandle.getRecordSize();
-
-    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
-    RM_Record recordIn;
     
-    while (iter.getNextRecord(recordIn) != -1) {
-        if (_checkWhereClause(recordIn, whereClause)) {
-            records.push_back(recordIn);
-        }
-    }
+    getWhereRecords(whereClause, records);
     
+    int deleteNum = 0;
     for (auto &record: records) {
+        std::string tem = record._data.substr(RECORD_REFER * 4, 4);
+        int refer = *(int*)(tem.c_str());
+        if (refer > 0) {
+            printf("Record cannot be delete, you need to delete foreignKey first!\n");
+            continue;
+        }
         RID rid = record.getRID();
         _rmHandle.deleteRecord(rid);
     }
@@ -293,28 +312,80 @@ bool TableHandle::_checkWhereClause(RM_Record &record, std::vector<WhereClause> 
     return true;
 }
 
-bool TableHandle::_checkWhereValid(std::vector<WhereClause> &whereClause)
+bool TableHandle::checkWhereValid(std::vector<WhereClause> &whereClause)
 {
     return true;
 }
 
+bool TableHandle::getWhereRecords(std::vector<WhereClause> &whereClause, std::vector<RM_Record> &records) {
+    WhereClause indexClause;
+    AttrInfo indexInfo;
+    int indexOffset;
+    bool find = false;
+    for (WhereClause &clause: whereClause) {
+        int offset = 0;
+        for ( auto &attr : _attributions )
+        {
+            if ((clause.left.col.indexName == attr.attrName) && (attr.isIndex) && (clause.right.isVal) && (!clause.right.useNull)) {
+                if (!find) {
+                    indexClause = clause;
+                    indexInfo = attr;
+                    indexOffset = offset;
+                    find = true;
+                } else if (indexInfo.attrLength < attr.attrLength) {
+                    indexClause = clause;
+                    indexInfo = attr;
+                    indexOffset = offset;
+                }
+                break;
+            }
+            offset += attr.attrLength;
+        }
+    }
+    
+    if (!find)
+    {
+        RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
+        RM_Record recordIn;
+        
+        while ( iter.getNextRecord(recordIn) != -1 )
+        {
+            if ( _checkWhereClause(recordIn, whereClause))
+            {
+                records.push_back(recordIn);
+            }
+        }
+    } else {
+        if (!indexClause.right.isNull) //如果是 (= null) 就清空
+        {
+            IX_IndexScan iter(_ixHandles.at(indexInfo.attrName), indexInfo.attrType, indexInfo.attrLength,
+                              indexClause.comOp, indexClause.right.value.c_str());
+            std::vector<RID> rids;
+            RID rid;
+            RM_Record recordIn;
+            while (iter.getNextEntry(rid) != -1) {
+                rids.push_back(rid);
+            }
+            
+            for (auto &r: rids) {
+                _rmHandle.getRecord(r, recordIn);
+                if (_checkWhereClause(recordIn, whereClause)) {
+                    records.push_back(recordIn);
+                }
+            }
+        }
+    }
+    return find;
+}
+
 void TableHandle::update(std::vector<WhereClause> &whereClause, std::vector<SetClause> &setClause)
 {
-    _checkWhereValid(whereClause);
+    checkWhereValid(whereClause);
     _checkSetValid(setClause);
     
     std::vector<RM_Record> records;
-    int recordSize = _rmHandle.getRecordSize();
-    char *buf = (char*)malloc(recordSize * sizeof(char));
     
-    RM_Iterator iter(_rmHandle, INT, 4, 0, GE_OP, nullptr);
-    RM_Record recordIn;
-    
-    while (iter.getNextRecord(recordIn) != -1) {
-        if (_checkWhereClause(recordIn, whereClause)) {
-            records.push_back(recordIn);
-        }
-    }
+    getWhereRecords(whereClause, records);
     
     printf("update record size: %lu\n", records.size());
     
@@ -355,7 +426,7 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
     std::vector<std::vector<std::string>> data;
     
     _modifyWhereClause(whereClause);
-    _checkWhereValid(whereClause);
+    checkWhereValid(whereClause);
     
     //prepare selector
     std::vector<int> indexes;
@@ -495,4 +566,115 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
     }
     
     printf("%s\n", splitLine.c_str());
+}
+
+void TableHandle::insert(const std::vector<DataAttr> &data)
+{
+    RID rid;
+    
+    bool res = false;
+    for (int i = 0; i < _attributions.size(); i++) {
+        if (_attributions[i].isPrimary) {
+            res = _ixHandles.at(_attributions[i].attrName).notInIndex(data[i].data.c_str());
+        }
+    }
+    
+    if (res) { //already have
+        throw Error("Record have the same primary key with item in table!\n", Error::INSERT_ERROR);
+    }
+    
+    int recordSize = _rmHandle.getRecordSize();
+    std::string buf;
+    
+    buf.assign(recordSize, '\0');
+    int point = RECORD_HEAD * 4;
+    int head = 0;
+    for ( int i = 0; i < data.size(); i++ )
+    {
+        if ( data[i].isNull )
+        {
+            if ( _attributions[i].isNull )
+            {
+                head |= (1 << i);
+            } else
+            {
+                printf("this attributions can't insert!\n");
+            }
+        } else
+        {
+            if ( _attributions[i].attrType == INT || _attributions[i].attrType == FLOAT )
+            {
+                buf.replace(point, _attributions[i].attrLength, data[i].data);
+            } else if ( _attributions[i].attrLength < data[i].data.size())
+            {
+                printf("can't match: %d\n", i);
+                printf("this data is too long!\n");
+            } else
+            {
+                buf.replace(point, data[i].data.size(), data[i].data);
+            }
+        }
+        point += _attributions[i].attrLength;
+    }
+    std::string tem((const char *) &head, 4);
+    buf.replace(4, 4, tem);
+    
+    _rmHandle.insertRecord(buf.c_str(), rid);
+    
+    for ( int i = 0; i < _attributions.size(); i++ )
+    {
+        if ( _attributions[i].isIndex )
+        {
+            _ixHandles.at(_attributions[i].attrName).insertEntry(data[i].data.c_str(), rid);
+        }
+    }
+}
+
+bool TableHandle::addForeign(const std::string &key) {
+    IX_IndexScan iter(_ixHandles.at(_primaryKey.attrName), _primaryKey.attrType, _primaryKey.attrLength,
+                      EQ_OP, key.c_str());
+    RID rid;
+    RM_Record recordIn;
+    if (iter.getNextEntry(rid) == -1) {
+        return false;
+    }
+    
+    _rmHandle.getRecord(rid, recordIn);
+    
+    std::string tem = recordIn._data.substr(RECORD_REFER * 4, 4);
+    int refer = *(int*)(tem.c_str());
+    refer++;
+    tem = std::string((const char*)&refer, 4);
+    recordIn._data.replace(RECORD_REFER * 4, 4, tem);
+    _rmHandle.updateRecord(recordIn);
+    
+    _rmHandle.getRecord(rid, recordIn);
+    tem = recordIn._data.substr(RECORD_REFER * 4, 4);
+    refer = *(int*)(tem.c_str());
+    return true;
+}
+
+bool TableHandle::delForeign(const std::string &key) {
+    IX_IndexScan iter(_ixHandles.at(_primaryKey.attrName), _primaryKey.attrType, _primaryKey.attrLength,
+                      EQ_OP, key.c_str());
+    RID rid;
+    RM_Record recordIn;
+    if (iter.getNextEntry(rid) == -1) {
+        return false;
+    }
+    _rmHandle.getRecord(rid, recordIn);
+    
+    std::string tem = recordIn._data.substr(RECORD_REFER * 4, 4);
+    int refer = *(int*)(tem.c_str());
+    refer--;
+    if (refer < 0) {
+        printf("WARNING: refer will be negative!\n");
+        return false;
+    }
+    tem = std::string((const char*)&refer, 4);
+    recordIn._data.replace(RECORD_REFER * 4, 4, tem);
+    
+    _rmHandle.updateRecord(recordIn);
+    
+    return false;
 }

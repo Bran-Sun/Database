@@ -41,6 +41,8 @@ public:
     int getFrontNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
     int getBackNextItem(std::shared_ptr<BpNode> &node, int &nodeIndex, void *&key, RID &rid) const;
     
+    bool notInIndex(const void *key) const;
+    
 private:
     void _forcePage(int index);
     std::shared_ptr<BpNode> _findKey(const void *pData) const;

@@ -13,7 +13,6 @@ int IX_IndexScan::getNextEntry(RID &rid)
     switch (_scanType) {
         case FRONT:
             res = _handle.getFrontNextItem(_node, _nodeIndex, key, rid);
-            printf("fuck! res: %d, key: %d\n", res, ((int*)key)[0]);
             if (!_satisfy(key) || (res != 0)) {
                 return -1;
             } else {
@@ -21,7 +20,6 @@ int IX_IndexScan::getNextEntry(RID &rid)
             }
         case BACK:
             res = _handle.getBackNextItem(_node, _nodeIndex, key, rid);
-            printf("fuck! res: %d, key: %d\n", res, ((int*)key)[0]);
             if (!_satisfy(key) || (res != 0)) {
                 return -1;
             } else {
@@ -68,5 +66,4 @@ void IX_IndexScan::_init() {
             _scanType = FRONT;
             break;
     }
-    printf("leftNode:%d\n", _node->getPageID());
 }

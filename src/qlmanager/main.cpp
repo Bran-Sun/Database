@@ -73,7 +73,7 @@ int main() {
                               "INSERT INTO `food` VALUES (200001,1613,'Boiled dumplings',64.0236),(200002,1768,'Waffles',80.5322);"
                               );
     
-    std::string selectCommand("SELECT * FROM customer WHERE id > 314000;\n");
+    std::string selectCommand("SELECT * FROM customer WHERE id = 314000;\n");
     
     std::string updateCommand("USE orderDB;\n"
                               "UPDATE customer SET name = 'BRAN' WHERE id=300003;\n"
@@ -89,6 +89,14 @@ int main() {
     std::string showTables("SHOW TABLES;\n");
     std::string descTable("DESC orders;\n");
     std::string selectOrders("SELECT * FROM customer WHERE date > '2016-09-12';\n");
+    std::string foreignTest("INSERT INTO `restaurant` VALUES (1001,'apple pan the','10801 w. pico blvd.','310-475-3585',3.5),(1002,'asahi ramen','2027 sawtelle blvd.','310-479-2231',4.25),(1003,'baja fresh','3345 kimber dr.','805-498-4049',3.71);\n"
+                            "INSERT INTO `food` VALUES (200001,1001,'Boiled dumplings',64.0236),(200002,1001,'Waffles',80.5322);\n"
+                            );
+    
+    std::string foreignTest2("DELETE FROM restaurant WHERE id = 1002;\n");
+    std::string foreignTest3("INSERT INTO `food` VALUES (200030,1001,'Boiled dumplings',64.0236),(200031,1001,'Waffles',80.5322);\n"
+    );
+    std::string universe("SELECT * FROM restaurant WHERE id < 10000;\n");
     
     std::ifstream fin("customer.sql");
     std::string insertCustomer;
@@ -112,7 +120,7 @@ int main() {
     
     using namespace parser;
     Parser par;
-    std::vector<std::shared_ptr<Action>> actions = par.parse(useCommand+selectCommand);
+    std::vector<std::shared_ptr<Action>> actions = par.parse(initCommand + foreignTest);
     
     clock_t start, end;
     start = clock();
