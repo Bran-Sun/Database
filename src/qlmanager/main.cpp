@@ -10,10 +10,78 @@
 
 unsigned char MyBitMap::h[61]; //defination
 
-int main() {
+int main(int argc, char *argv[]) {
     MyBitMap::initConst();   //新加的初始化
     SystemManager system;
     
+    using namespace parser;
+    Parser par;
+    std::vector<std::shared_ptr<Action>> actions;
+    
+    std::ifstream fin;
+    std::string command;
+    clock_t start, end;
+    
+    if (argc > 1) {
+        for (int i = 1; i < argc; i++) {
+            command.clear();
+            fin.open(argv[i]);
+            if (fin.is_open()) {
+                std::string tem;
+                while (std::getline(fin, tem)) {
+                    command = command + tem;
+                }
+                fin.close();
+            }
+            
+            try {
+                actions = par.parse(command);
+            } catch (const Error &e) {
+                printf("%s", e.what());
+            }
+            
+            for (auto &act: actions) {
+                start = clock();
+                try {
+                    printf("mysql_show>\n");
+                    act->show();
+                    act->execute(system);
+                } catch (const Error &e) {
+                    printf("%s", e.what());
+                }
+                end = clock();
+                cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
+            }
+        }
+    }
+    
+    while (true) {
+        printf("mysql> ");
+        getline(std::cin, command);
+        if (command == "QUIT" || command == "QUIT;") {
+            break;
+        }
+        try {
+            actions = par.parse(command);
+        } catch (const Error &e) {
+            printf("%s", e.what());
+        }
+        
+        for (auto &act: actions) {
+            start = clock();
+            try {
+                printf("mysql_show>\n");
+                act->show();
+                act->execute(system);
+            } catch (const Error &e) {
+                printf("%s", e.what());
+            }
+            end = clock();
+            cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
+        }
+    }
+    
+    /*
     std::string command("CREATE DATABASE orderDB;\n"
                         "USE orderDB;\n"
                         "CREATE TABLE customer(\n"
@@ -102,7 +170,7 @@ int main() {
     
     std::string doubleSelect("SELECT * FROM restaurant WHERE id < 10000;\n"
                              "SELECT * FROM food WHERE id > 0;\n"
-            "SELECT * FROM restaurant, food WHERE food.restaurant_id > 0;\n");
+            "SELECT * FROM restaurant, food WHERE food.restaurant_id = restaurant.id;\n");
     
     std::ifstream fin("customer.sql");
     std::string insertCustomer;
@@ -126,17 +194,29 @@ int main() {
     
     using namespace parser;
     Parser par;
-    std::vector<std::shared_ptr<Action>> actions = par.parse(useCommand + insertOrders);
+    
+    std::vector<std::shared_ptr<Action>> actions;
+    
+    try {
+        actions = par.parse();
+    } catch (const Error &e) {
+        printf("%s", e.what());
+    }
     
     clock_t start, end;
     start = clock();
     
     for (auto act : actions)
     {
-        act->show();
-        act->execute(system);
+        try {
+            act->show();
+            act->execute(system);
+        } catch (const Error &e) {
+            printf("%s", e.what());
+        }
     }
     
     end = clock();
     cout<<"Run time: "<<(double)(end - start) / CLOCKS_PER_SEC<<"S"<<endl;
+     */
 }

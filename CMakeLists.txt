@@ -22,8 +22,4 @@ set(PARSE_FILES src/parser/Lexer.h src/parser/Lexer.cpp src/parser/Parser.h src/
 
 add_executable(Database ${SOURCE_FILES}  src/main.cpp)
 
-add_executable(Parser src/parser/Lexer.h src/parser/Lexer.cpp src/parser/Parser.h src/parser/Parser.cpp src/Action/Action.h
-        src/Action/Action.h src/Action/ShowAction.h src/Action/CreateAction.h src/Action/DropAction.h src/smmanager/DataInfo.h
-        src/Action/UseAction.h src/Action/TableAction.h src/parser/main.cpp src/Error/Error.h src/Error/Error.cpp)
-
 add_executable(query ${SOURCE_FILES} ${PARSE_FILES} src/qlmanager/main.cpp)

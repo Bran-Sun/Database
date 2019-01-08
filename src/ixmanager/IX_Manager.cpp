@@ -12,24 +12,24 @@ int IX_Manager::createIndex(const std::string &filename, int indexNo, AttrType a
     newName << filename << "." << indexNo;
     int maxKeyPerPage = (IX_PAGE_SIZE - attrLength - 4 * 4) / (12 + attrLength);
     if (maxKeyPerPage == 0) {
-        printf("IX_Manager: attrlength is too large!\n");
+        //printf("IX_Manager: attrlength is too large!\n");
         return -1;
     }
     
-    printf("creating index file %s...\n", newName.str().c_str());
+    //printf("creating index file %s...\n", newName.str().c_str());
     
     if (_fm->createFile(newName.str().c_str())) {
-        printf("creating index file %s succeed!\n", newName.str().c_str());
+        //printf("creating index file %s succeed!\n", newName.str().c_str());
     } else {
-        printf("creating index file %s failed!\n", newName.str().c_str());
+        //printf("creating index file %s failed!\n", newName.str().c_str());
         return -1;
     }
     
     int fileID;
     if (_fm->openFile(newName.str().c_str(), fileID)) {
-        printf("open index ifle %s success!", newName.str().c_str());
+        //printf("open index ifle %s success!", newName.str().c_str());
     } else {
-        printf("open index file %s failed!\n", newName.str().c_str());
+        //printf("open index file %s failed!\n", newName.str().c_str());
         return -1;
     }
     
@@ -51,7 +51,7 @@ int IX_Manager::createIndex(const std::string &filename, int indexNo, AttrType a
     _bpm->writeBack(index);
     _fm->closeFile(fileID);
     
-    printf("establishing header page in index file %s, close!\n", newName.str().c_str());
+    //printf("establishing header page in index file %s, close!\n", newName.str().c_str());
     
     return 0;
 }
@@ -77,14 +77,14 @@ int IX_Manager::openIndex(const std::string &filename, int indexNo, IX_IndexHand
     newName << filename << "." << indexNo;
     
     if (handle.isOpen()) {
-        printf("index file %s is already open!", newName.str().c_str());
+        //printf("index file %s is already open!", newName.str().c_str());
         return 0;
     }
     
     int fileID;
     bool suc = _fm->openFile(newName.str().c_str(), fileID);
     if (!suc) {
-        printf("cannot open index file %s\n", newName.str().c_str());
+        //printf("cannot open index file %s\n", newName.str().c_str());
         return -1;
     }
     

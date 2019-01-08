@@ -17,6 +17,8 @@ public:
     enum ErrorType {
         INSERT_ERROR,
         DELETE_ERROR,
+        LEXER_ERROR,
+        PARSER_ERROR,
     };
     
     Error(std::string errorMsg, ErrorType type): _errorMsg(std::move(errorMsg)), _type(type) { }

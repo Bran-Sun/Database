@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <algorithm>
+#include "../Error/Error.h"
 
 namespace parser
 {

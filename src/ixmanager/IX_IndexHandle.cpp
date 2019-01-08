@@ -55,10 +55,10 @@ void IX_IndexHandle::init(IX_HeaderPage *header, std::shared_ptr<BufPageManager>
     _attrType = header->attrType;
     _attrlength = header->attrlength;
     
-    std::cout << "pageNumber: " << _pageNumber << std::endl;
-    std::cout << "recordNumber: " << _recordNumber << std::endl;
-    std::cout << "rootPos: " << _rootPos << std::endl;
-    std::cout << "maxKeyPerPage: " << _maxKeyPerPage << std::endl;
+    //std::cout << "pageNumber: " << _pageNumber << std::endl;
+    //std::cout << "recordNumber: " << _recordNumber << std::endl;
+    //std::cout << "rootPos: " << _rootPos << std::endl;
+    //std::cout << "maxKeyPerPage: " << _maxKeyPerPage << std::endl;
     
     //emptyList
     for (int i = 0; i < (PAGE_SIZE /4 - 6); i++) {

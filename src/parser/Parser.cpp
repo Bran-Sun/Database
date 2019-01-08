@@ -21,7 +21,6 @@ namespace parser {
         if (_lookahead.type == TokenType::EOS) {
             return;
         }
-        
         _parseStmt();
         _parseStmtList();
     }
@@ -45,8 +44,7 @@ namespace parser {
             _parseTbStmt();
             _parseLabel(TokenType::SEMICOLON);
         } else {
-            printf("parse error\n");
-            return; //need to use throw
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -60,6 +58,8 @@ namespace parser {
             //TODO
             _parseLabel(TokenType::TABLES);
             _actions.push_back(std::make_shared<ShowTables>(ShowTables()));
+        } else {
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -88,7 +88,7 @@ namespace parser {
             //TODO
             _actions.push_back(std::make_shared<CreateIndex>(tableName, indexName));
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
 
@@ -113,7 +113,7 @@ namespace parser {
             //TODO
             _actions.push_back(std::make_shared<DropIndex>(tableName, indexName));
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -174,7 +174,7 @@ namespace parser {
             //TODO
             _actions.push_back(std::make_shared<SelectTable>(_tbList, _selector, _selectAll, _whereClause));
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -182,8 +182,7 @@ namespace parser {
         if (_lookahead.type == tok) {
             _lookahead = _lexer.next();
         } else {
-            printf("parser error\n");
-            return;
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -207,9 +206,9 @@ namespace parser {
                 printf("need to have one primary key!\n");
             }
         } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS){
-            //TODO
+            return;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -222,7 +221,7 @@ namespace parser {
         } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS) {
             return;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -269,7 +268,7 @@ namespace parser {
                 }
             }
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -368,7 +367,7 @@ namespace parser {
         } else if (_lookahead.type == TokenType::SEMICOLON) {
             return;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -393,7 +392,7 @@ namespace parser {
             _parseVALUEDATA();
             _data[_data.size() - 1].emplace_back(true);
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -406,7 +405,7 @@ namespace parser {
         } else if (_lookahead.type == TokenType::RIGHTPARENTHESIS) {
             return;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -434,7 +433,7 @@ namespace parser {
                 return;
             } else
             {
-                //TODO
+                throw Error("parse error.\n", Error::PARSER_ERROR);
             }
         }
     }
@@ -502,7 +501,7 @@ namespace parser {
                 _where.right.isNull = false;
             }
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -536,7 +535,7 @@ namespace parser {
             ans.col = _parseCol();
             ans.isVal = false;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
         return ans;
     }
@@ -574,7 +573,7 @@ namespace parser {
         } else if (_lookahead.type == TokenType::WHERE) {
             return;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -599,7 +598,7 @@ namespace parser {
                 //TODO
             }
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     
@@ -612,7 +611,7 @@ namespace parser {
         if (_lookahead.type == TokenType::WHERE) {
             return;
         } else {
-            //TODO
+            throw Error("parse error.\n", Error::PARSER_ERROR);
         }
     }
     

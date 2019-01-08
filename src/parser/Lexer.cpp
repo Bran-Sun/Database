@@ -192,6 +192,7 @@ namespace parser
             }
         }
         
+        throw Error("lexer error!\n", Error::LEXER_ERROR);
         return Token(TokenType::EOS);
     }
 }

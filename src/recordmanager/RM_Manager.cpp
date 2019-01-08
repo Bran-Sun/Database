@@ -14,7 +14,7 @@
  */
 int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> attributes)
 {
-    printf("rm_manager: creating record file %s ...\n", filename.c_str());
+    //printf("rm_manager: creating record file %s ...\n", filename.c_str());
     
     //recordSize: reference count(int), nullbit(int), attributions
     int recordSize = 0;
@@ -24,7 +24,7 @@ int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> at
     recordSize += RECORD_HEAD * 4;    //reference count + nullbit
     
     if (recordSize > PAGE_SIZE) {
-        printf("creating file failed! record size larger than page size\n");
+        //printf("creating file failed! record size larger than page size\n");
         return -1;
     } //记录大小必须小于页的大小
     
@@ -36,7 +36,7 @@ int RM_Manager::createFile(const std::string &filename, std::vector<AttrInfo> at
     bool suc = _fm->openFile(newName.c_str(), fileID);
     if (!suc) return -1;
     
-    printf("creating record file %s succeed!\n", filename.c_str());
+    //printf("creating record file %s succeed!\n", filename.c_str());
     
     //初始化第一页
     int pageID = 0;
