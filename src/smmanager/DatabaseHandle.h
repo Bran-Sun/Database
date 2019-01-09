@@ -62,6 +62,7 @@ public:
     void _modifyDBFile();
     bool _checkAttrInfo(const std::vector<AttrInfo> &attributes);
     void _openTable(const std::string tbName);
+    bool _checkInsert(const std::vector<AttrInfo> &info, const std::vector<DataAttr> &data);
 
 private:
     bool _modifyDbf;

@@ -487,7 +487,6 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
         RM_Record recordIn;
     
         while (iter.getNextRecord(recordIn) != -1) {
-            //printf("iter one!\n");
             if (_checkWhereClause(recordIn, whereClause)) {
                 data.emplace_back();
                 if (selectAll) {
@@ -561,19 +560,36 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
     printf("\n");
     printf("%s\n", splitLine.c_str());
     
-    for (auto r: data) {
-        for (int i = 0; i < _attributions.size(); i++) {
-            if (_attributions[i].attrType == INT) {
-                int *t = (int*)(r[i].c_str());
-                printf("%d\t", t[0]);
-            } else if (_attributions[i].attrType == FLOAT) {
-                float *t = (float*)(r[i].c_str());
-                printf("%.2f\t", t[0]);
-            } else {
-                printf("%s\t", r[i].c_str());
+    if (selectAll) {
+        for ( auto r: data ) {
+            for ( int i = 0; i < _attributions.size(); i++ ) {
+                if ( _attributions[i].attrType == INT ) {
+                    int *t = (int *) (r[i].c_str());
+                    printf("%d\t", t[0]);
+                } else if ( _attributions[i].attrType == FLOAT ) {
+                    float *t = (float *) (r[i].c_str());
+                    printf("%.2f\t", t[0]);
+                } else {
+                    printf("%s\t", r[i].c_str());
+                }
             }
+            printf("\n");
         }
-        printf("\n");
+    } else {
+        for ( auto r: data ) {
+            for ( int i = 0; i < indexes.size(); i++ ) {
+                if ( _attributions[indexes[i]].attrType == INT ) {
+                    int *t = (int *) (r[i].c_str());
+                    printf("%d\t", t[0]);
+                } else if ( _attributions[indexes[i]].attrType == FLOAT ) {
+                    float *t = (float *) (r[i].c_str());
+                    printf("%.2f\t", t[0]);
+                } else {
+                    printf("%s\t", r[i].c_str());
+                }
+            }
+            printf("\n");
+        }
     }
     
     printf("%s\n", splitLine.c_str());

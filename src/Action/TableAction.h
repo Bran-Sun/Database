@@ -80,7 +80,7 @@ public:
     }
     
     void show() {
-        printf("select table %s, whereSize: %lu\n", _tbList[0].c_str(), _whereClause.size());
+        printf("select table %s, whereSize: %lu, selectSIze: %lu\n", _tbList[0].c_str(), _whereClause.size(), _selector.size());
     }
     
 private:

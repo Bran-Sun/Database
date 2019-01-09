@@ -276,6 +276,11 @@ void DatabaseHandle::insert(const std::string &tbName, const std::vector<std::ve
     int errorNum = 0;
     for ( auto &single_data: data ) {
         //_insertSingleData(tbName, single_data, offsets, indexes);
+        if (!_checkInsert(attrInfo, single_data)) {
+            errorNum += 1;
+            continue;
+        }
+        
         bool foreignSuccess = true;
         int i;
         for ( i = 0; i < indexes.size(); i++ ) {
@@ -741,4 +746,43 @@ void DatabaseHandle::_selectDouble(std::vector<std::string> &tbList, std::vector
     
     printf("%s\n", splitLine.c_str());
     printf("select %lu lines\n", data.size());
+}
+
+bool DatabaseHandle::_checkInsert(const std::vector<AttrInfo> &info, const std::vector<DataAttr> &data) {
+    static const int days[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (data.size() != info.size()) return false;
+    for (int i = 0; i < data.size(); i++) {
+        if (info[i].attrType == STRING) {
+            if (data[i].data.size() > info[i].attrLength) return false;
+            if (!(data[i].attrType == STRING)) return false;
+        } else if (info[i].attrType == DATE) {
+            if (data[i].data.size() != 10) return false;
+            int year, month, day;
+            if (sscanf(data[i].data.substr(0, 4).c_str(), "%d", &year) == 0) return false;
+            if (sscanf(data[i].data.substr(5, 7).c_str(), "%d", &month) == 0) return false;
+            if (sscanf(data[i].data.substr(8, 10).c_str(), "%d", &day) == 0) return false;
+            if (year < 1000) return false;
+            if (month < 0 || month > 12) return false;
+            if (month == 2) {
+                if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
+                    if (day <= 0 || day > 29) {
+                        return false;
+                    }
+                } else {
+                    if (day <= 0 || day > 28) {
+                        return false;
+                    }
+                }
+            } else {
+                if (day <= 0 || day > days[month - 1]) {
+                    return false;
+                }
+            }
+        } else if (info[i].attrType == INT){
+            if (data[i].attrType != INT) return false;
+        } else if (info[i].attrType == FLOAT) {
+            if (data[i].attrType != INT && data[i].attrType != FLOAT) return false;
+        }
+    }
+    return true;
 }
