@@ -453,6 +453,21 @@ void DatabaseHandle::select(std::vector<std::string> &tbList, std::vector<Col> &
         _tableHandles.at(tbList[0]).selectSingle(selector, selectAll, whereClause);
     } else if ( tbList.size() == 2 ) {
         _selectDouble(tbList, selector, selectAll, whereClause);
+    } else {
+        _tbInfos.clear();
+        _multiInit = false;
+        for (auto &tbName: tbList) {
+            _tbInfos.insert(std::make_pair(tbName, getRecordInfo(tbName)));
+        }
+        int findCount = 0;
+        std::string splitLine;
+        splitLine.assign(80, '=');
+        printf("%s\n", splitLine.c_str());
+        _selectorNames.clear();
+        _multiSelect(tbList, selector, selectAll, whereClause, std::vector<AttrType>(), std::vector<std::string>(), findCount);
+        
+        printf("%s\n", splitLine.c_str());
+        printf("select %lu lines\n", findCount);
     }
     //TODO multi table
 }
@@ -785,4 +800,167 @@ bool DatabaseHandle::_checkInsert(const std::vector<AttrInfo> &info, const std::
         }
     }
     return true;
+}
+
+void DatabaseHandle::_multiSelect(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll,
+                                  std::vector<WhereClause> &whereClause, std::vector<AttrType> curType, std::vector<std::string> curData, int &findCount) {
+    //recursive
+    
+    //choose a tbName
+    std::string tbName;
+    WhereClause chooseClause;
+    bool hasClause;
+    int point = -1; //5 for not index, not equal, 10 for equal not index, 15 for equal not index, 20 for equal and index
+    for (auto &clause: whereClause) {
+        std::string tem = clause.left.col.tbName;
+        if (clause.right.isVal) {
+            for (auto &attr: _tbInfos.at(tem)) {
+                if (attr.attrName == clause.left.col.indexName) {
+                    if (attr.isIndex) {
+                        if ( clause.comOp == EQ_OP ) {
+                            if ( point < 20 ) {
+                                point = 20;
+                                chooseClause = clause;
+                                tbName = tem;
+                            }
+                        } else {
+                            if ( point < 10 ) {
+                                point = 10;
+                                chooseClause = clause;
+                                tbName = tem;
+                            }
+                        }
+                    } else {
+                        if ( clause.comOp == EQ_OP ) {
+                            if ( point < 15 ) {
+                                point = 15;
+                                chooseClause = clause;
+                                tbName = tem;
+                            }
+                        } else {
+                            if ( point < 5 ) {
+                                point = 5;
+                                chooseClause = clause;
+                                tbName = tem;
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (point == -1) {
+        tbName = tbList[0];
+        hasClause = false;
+    } else {
+        hasClause = true;
+    }
+    //printf("decide name: %s\n", tbName.c_str());
+    
+    std::vector<std::string> leftTB;
+    for (auto tb: tbList) {
+        if (tb != tbName) leftTB.push_back(tb);
+    }
+    
+    std::vector<WhereClause> feedClauses;
+    std::vector<WhereClause> leftClauses, modifyClauses;
+    if (hasClause) {
+        for (auto &clause: whereClause) {
+            if (clause.left.col.tbName == tbName && (clause.right.isVal || clause.right.col.tbName == tbName)) {
+                feedClauses.push_back(clause);
+            }  else if (clause.left.col.tbName == tbName || clause.right.col.tbName == tbName) {
+                modifyClauses.push_back(clause);
+            } else {
+                leftClauses.push_back(clause);
+            }
+        }
+    }
+    
+    std::vector<int> modifyOffsets, modifyIndexes;
+    for (auto &clause: modifyClauses) {
+        if (clause.left.col.tbName == tbName) {
+            WhereVal tem = clause.right;
+            clause.right = clause.left;
+            clause.left = tem;
+            clause.comOp = reverseCom(clause.comOp);
+        }
+        clause.right.isVal = true;
+        int offset = 0;
+        for (int i = 0; i < _tbInfos.at(tbName).size(); i++) {
+            if (_tbInfos.at(tbName)[i].attrName == clause.right.col.indexName) {
+                modifyIndexes.push_back(i);
+                modifyOffsets.push_back(offset);
+                break;
+            } else {
+                offset += _tbInfos.at(tbName)[i].attrLength;
+            }
+        }
+    }
+    
+    
+    
+    //selector
+    std::vector<int> indexes, offsets;
+    for (auto &col: selector) {
+        int offset = 0;
+        if ( col.tbName == tbName ) {
+            for (int i = 0; i < _tbInfos.at(tbName).size(); i++) {
+                if ( _tbInfos.at(tbName)[i].attrName == col.indexName ) {
+                    _selectorNames.push_back(col.tbName + "." + col.indexName);
+                    indexes.push_back(i);
+                    offsets.push_back(offset);
+                    curType.push_back(_tbInfos.at(tbName)[i].attrType);
+                    break;
+                } else {
+                    offset += _tbInfos.at(tbName)[i].attrLength;
+                }
+            }
+        }
+    }
+    
+    if (leftTB.size () == 0 && !_multiInit) {
+        _multiInit = true;
+        for (auto s: _selectorNames) {
+            printf("%s\t", s.data());
+        }
+        printf("\n");
+        std::string splitLine;
+        splitLine.assign(80, '=');
+        printf("%s\n", splitLine.c_str());
+    }
+    
+    
+    RM_Record record;
+    _tableHandles.at(tbName).prepareMultiSearch(feedClauses);
+    while (_tableHandles.at(tbName).multiSearch(record) != -1) {
+        std::vector<std::string> newdata = curData;
+        for (int i = 0; i < indexes.size(); i++) {
+            newdata.push_back(record._data.substr(RECORD_HEAD * 4 + offsets[i], _tbInfos.at(tbName)[indexes[i]].attrLength));
+        }
+        
+        if (leftTB.size() == 0) {
+            for (int i = 0; i < newdata.size(); i++) {
+                if ( curType[i] == INT ) {
+                    auto t = (int *) (newdata[i].c_str());
+                    printf("%d\t", t[0]);
+                } else if ( curType[i] == FLOAT ) {
+                    auto t = (float *) (newdata[i].c_str());
+                    printf("%.2f\t", t[0]);
+                } else {
+                    printf("%s\t", newdata[i].c_str());
+                }
+            }
+            findCount++;
+            printf("\n");
+            continue;
+        }
+        std::vector<WhereClause> temClauses = leftClauses;
+        for (int i = 0; i < modifyClauses.size(); i++) {
+            modifyClauses[i].right.value = record._data.substr(RECORD_HEAD * 4 + modifyOffsets[i], _tbInfos.at(tbName)[modifyIndexes[i]].attrLength);
+            temClauses.push_back(modifyClauses[i]);
+        }
+        _multiSelect(leftTB, selector, selectAll, temClauses, curType, newdata, findCount);
+    }
 }

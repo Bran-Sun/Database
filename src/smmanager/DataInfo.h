@@ -47,11 +47,22 @@ struct AttrInfo {
     }
 };
 
+enum AggType {
+    SUM,
+    MIN,
+    MAX,
+    AVG,
+    COUNT,
+};
+
 struct Col{
     std::string tbName, indexName;
+    bool isAgg;
+    AggType aggType;
     
-    Col() {}
-    Col(std::string t, std::string i): tbName(t), indexName(i) {}
+    Col() { isAgg = false; }
+    Col(std::string t, std::string i): tbName(t), indexName(i) { isAgg = false; }
+    Col(std::string t, std::string i, AggType type): tbName(t), indexName(i), isAgg(true), aggType(type) {}
 };
 
 struct WhereVal{

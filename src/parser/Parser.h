@@ -64,6 +64,7 @@ namespace parser
         void _parseSetClauseReceiver();
         
         void _parseSelector();
+        Col _parseSeCol();
         void _parseTableLists();
         
     private:

@@ -5,6 +5,25 @@
 #include "pagedef.h"
 #include <string>
 
+
+ComOp reverseCom(ComOp comOp) {
+    switch (comOp) {
+        case EQ_OP:
+        case NE_OP:
+            return comOp;
+        case GT_OP:
+            return LE_OP;
+        case GE_OP:
+            return LT_OP;
+        case LE_OP:
+            return GT_OP;
+        case LT_OP:
+            return GE_OP;
+        case NO_OP:
+            return NO_OP;
+    }
+}
+
 int TypeComp(const void *p1, const void *p2, AttrType type, int attrlength) {
     char *a, *b;
     

@@ -46,6 +46,8 @@ public:
     
     bool checkWhereValid(std::vector<WhereClause> &whereClause);
     bool getWhereRecords(std::vector<WhereClause> &whereClause, std::vector<RM_Record> &records);
+    void prepareMultiSearch(std::vector<WhereClause> &whereClause);
+    int multiSearch(RM_Record &record);
 
 private:
     void _openIndex();
@@ -63,6 +65,11 @@ private:
     std::shared_ptr<IX_Manager> _ix;
     RM_FileHandle _rmHandle;
     std::map<std::string, IX_IndexHandle> _ixHandles;
+    std::shared_ptr<RM_Iterator> _rmIter;
+    std::shared_ptr<IX_IndexScan> _ixScan;
+    bool _multiFind;
+    std::vector<WhereClause> _multiWhere;
+    RID _multiRid;
 };
 
 

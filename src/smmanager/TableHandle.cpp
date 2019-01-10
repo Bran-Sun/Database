@@ -433,12 +433,21 @@ void TableHandle::_modifyWhereClause(std::vector<WhereClause> &whereClause)
 
 void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause)
 {
+    static const std::map<AggType, std::string> agg2name = {
+            {AVG, "AVG"},
+            {COUNT, "COUNT"},
+            {SUM, "SUM"},
+            {MIN, "MIN"},
+            {MAX, "MAX"}
+    };
+    
     std::vector<std::vector<std::string>> data;
     
     _modifyWhereClause(whereClause);
     checkWhereValid(whereClause);
     
     //prepare selector
+    
     std::vector<int> indexes;
     std::vector<int> offsets;
     for (auto &col: selector) {
@@ -450,6 +459,26 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
                 break;
             } else {
                 offset += _attributions[i].attrLength;
+            }
+        }
+    }
+    
+    bool isAgg = false;
+    for (auto &col: selector) {
+        if (col.isAgg) {
+            isAgg = true;
+            break;
+        }
+    }
+    
+    if (isAgg) {
+        for (int i = 0; i < selector.size(); i++) {
+            if (!selector[i].isAgg) {
+                throw Error("select item is not correct!\n", Error::SELECT_ERROR);
+            } else if (selector[i].aggType != COUNT) {
+                if (_attributions[indexes[i]].attrType != INT && _attributions[indexes[i]].attrType != FLOAT) {
+                    throw Error("select item is not correct!\n", Error::SELECT_ERROR);
+                }
             }
         }
     }
@@ -546,6 +575,108 @@ void TableHandle::selectSingle(std::vector<Col> &selector, bool selectAll, std::
     std::string splitLine;
     splitLine.assign(50, '=');
     printf("%s\n", splitLine.c_str());
+    
+    
+    if (isAgg) {
+        for (auto col: selector) {
+            printf("%s(%s)\t", agg2name.at(col.aggType).c_str(), col.indexName.c_str());
+        }
+        printf("\n");
+        printf("%s\n", splitLine.c_str());
+        
+        for (int i = 0; i < selector.size(); i++) {
+            long long ans_int = 0;
+            double ans_float = 0.0;
+            switch (selector[i].aggType) {
+                case COUNT:
+                    printf("%lu\t", data.size());
+                    continue;
+                case MAX:
+                    if (_attributions[indexes[i]].attrType == INT) {
+                        for (auto &d: data) {
+                            int tem = *(int*)(d[i].c_str());
+                            if (ans_int < tem) {
+                                ans_int = tem;
+                            }
+                        }
+                        printf("%lld\t", ans_int);
+                    } else {
+                        for (auto &d: data) {
+                            float tem = *(float*)(d[i].c_str());
+                            if (ans_float < tem) {
+                                ans_float = tem;
+                            }
+                        }
+                        printf("%.2f\t", ans_float);
+                    }
+                    continue;
+                case MIN:
+                    if (_attributions[indexes[i]].attrType == INT) {
+                        ans_int = 10000000;
+                        for (auto &d: data) {
+                            int tem = *(int*)(d[i].c_str());
+                            if (ans_int > tem) {
+                                ans_int = tem;
+                            }
+                        }
+                        printf("%lld\t", ans_int);
+                    } else {
+                        ans_float = 10000000.0;
+                        for (auto &d: data) {
+                            float tem = *(float*)(d[i].c_str());
+                            if (ans_float > tem) {
+                                ans_float = tem;
+                            }
+                        }
+                        printf("%.2f\t", ans_float);
+                    }
+                    continue;
+                case SUM:
+                    if (_attributions[indexes[i]].attrType == INT) {
+                        ans_int = 0;
+                        for (auto &d: data) {
+                            int tem = *(int*)(d[i].c_str());
+                                ans_int += tem;
+                        }
+                        printf("%lld\t", ans_int);
+                    } else {
+                        ans_float = 0.0;
+                        for (auto &d: data) {
+                            float tem = *(float*)(d[i].c_str());
+                            ans_float += tem;
+                        }
+                        printf("%.2f\t", ans_float);
+                    }
+                    continue;
+                case AVG:
+                    if (_attributions[indexes[i]].attrType == INT) {
+                        ans_int = 0;
+                        for (auto &d: data) {
+                            int tem = *(int*)(d[i].c_str());
+                            ans_int += tem;
+                        }
+                        int size = data.size();
+                        printf("%.2f\t", (float)ans_int / size);
+                    } else {
+                        ans_float = 0.0;
+                        for (auto &d: data) {
+                            float tem = *(float*)(d[i].c_str());
+                            ans_float += tem;
+                        }
+                        printf("%.2f\t", ans_float / data.size());
+                    }
+                    continue;
+            }
+        }
+        
+        printf("\n");
+        printf("%s\n", splitLine.c_str());
+        printf("select %lu lines\n", 1);
+        return;
+    }
+    
+    
+    
     if (selectAll) {
         for (auto &attr: _attributions) {
             printf("%s\t", attr.attrName.c_str());
@@ -709,7 +840,7 @@ bool TableHandle::delForeign(const char *key) {
 
 void TableHandle::update(RM_Record &record, std::vector<SetClause> &setClause, std::vector<int> &indexes, std::vector<int> &offsets) {
     for (int i = 0; i < setClause.size(); i++) {
-        printf("fuck: %d\n", *(int*)(record._data.c_str() + offsets[i] + 4 * RECORD_HEAD));
+        //printf("fuck: %d\n", *(int*)(record._data.c_str() + offsets[i] + 4 * RECORD_HEAD));
         if ( _attributions[indexes[i]].isIndex ) {
             _ixHandles.at(_attributions[indexes[i]].attrName).deleteEntry(record._data.c_str() + offsets[i] + 4 * RECORD_HEAD,
                                                                      record.getRID());
@@ -722,4 +853,62 @@ void TableHandle::update(RM_Record &record, std::vector<SetClause> &setClause, s
         }
     }
     _rmHandle.updateRecord(record);
+}
+
+void TableHandle::prepareMultiSearch(std::vector<WhereClause> &whereClause) {
+    //std::cerr << _tableName << " wheresize: " << whereClause.size() << std::endl;
+    _multiWhere = whereClause;
+    
+    WhereClause indexClause;
+    AttrInfo indexInfo;
+    int indexOffset;
+    _multiFind = false;
+    for ( WhereClause &clause: whereClause ) {
+        int offset = 0;
+        for ( auto &attr : _attributions ) {
+            if ((clause.left.col.indexName == attr.attrName) && (attr.isIndex) && (clause.right.isVal) &&
+                (!clause.right.useNull)) {
+                if ( !_multiFind ) {
+                    indexClause = clause;
+                    indexInfo = attr;
+                    indexOffset = offset;
+                    _multiFind = true;
+                } else if ( indexInfo.attrLength < attr.attrLength ) {
+                    indexClause = clause;
+                    indexInfo = attr;
+                    indexOffset = offset;
+                }
+                break;
+            }
+            offset += attr.attrLength;
+        }
+    }
+    
+    if (!_multiFind) {
+        _rmIter =  std::make_shared<RM_Iterator>(_rmHandle, INT, 4, 0, GE_OP, nullptr); //no use GE
+    } else {
+        if (!indexClause.right.isNull) //如果是 (= null) 就清空
+        {
+            _ixScan = std::make_shared<IX_IndexScan>(_ixHandles.at(indexInfo.attrName), indexInfo.attrType, indexInfo.attrLength,
+                              indexClause.comOp, indexClause.right.value.c_str());
+        }
+    }
+}
+
+int TableHandle::multiSearch(RM_Record &record) {
+    if (!_multiFind) {
+        while ( _rmIter->getNextRecord(record) != -1 ) {
+            if ( _checkWhereClause(record, _multiWhere)) {
+                return 0;
+            }
+        }
+    } else {
+        while (_ixScan->getNextEntry(_multiRid) != -1) {
+            _rmHandle.getRecord(_multiRid, record);
+            if (_checkWhereClause(record, _multiWhere)) {
+                return 0;
+            }
+        }
+    }
+    return -1;
 }

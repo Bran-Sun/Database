@@ -65,6 +65,7 @@ int main(int argc, char *argv[]) {
             actions = par.parse(command);
         } catch (const Error &e) {
             printf("%s", e.what());
+            continue;
         }
         
         for (auto &act: actions) {

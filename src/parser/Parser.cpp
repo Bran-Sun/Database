@@ -577,18 +577,68 @@ namespace parser {
         }
     }
     
+    Col Parser::_parseSeCol() {
+        if (_lookahead.type == TokenType::IDENTIFIER)  {
+            return _parseCol();
+        } else if (_lookahead.type == TokenType::AVG) {
+            _parseLabel(TokenType::AVG);
+            _parseLabel(TokenType::LEFTPARENTHESIS);
+            Col col = _parseCol();
+            _parseLabel(TokenType::RIGHTPARENTHESIS);
+            col.isAgg = true;
+            col.aggType = AVG;
+            return col;
+        } else if (_lookahead.type == TokenType::SUM) {
+            _parseLabel(TokenType::SUM);
+            _parseLabel(TokenType::LEFTPARENTHESIS);
+            Col col = _parseCol();
+            _parseLabel(TokenType::RIGHTPARENTHESIS);
+            col.isAgg = true;
+            col.aggType = SUM;
+            return col;
+        } else if (_lookahead.type == TokenType::MIN) {
+            _parseLabel(TokenType::MIN);
+            _parseLabel(TokenType::LEFTPARENTHESIS);
+            Col col = _parseCol();
+            _parseLabel(TokenType::RIGHTPARENTHESIS);
+            col.isAgg = true;
+            col.aggType = MIN;
+            return col;
+        } else if (_lookahead.type == TokenType::MAX) {
+            _parseLabel(TokenType::MAX);
+            _parseLabel(TokenType::LEFTPARENTHESIS);
+            Col col = _parseCol();
+            _parseLabel(TokenType::RIGHTPARENTHESIS);
+            col.isAgg = true;
+            col.aggType = MAX;
+            return col;
+        } else if (_lookahead.type == TokenType::COUNT) {
+            _parseLabel(TokenType::COUNT);
+            _parseLabel(TokenType::LEFTPARENTHESIS);
+            Col col = _parseCol();
+            _parseLabel(TokenType::RIGHTPARENTHESIS);
+            col.isAgg = true;
+            col.aggType = COUNT;
+            //printf("fuck avg!\n");
+            return col;
+        } else {
+            throw Error("parse error.\n", Error::PARSER_ERROR);
+        }
+    }
+    
     void Parser::_parseSelector() {
         if (_lookahead.type == TokenType::STARKEY) {
             _parseLabel(TokenType::STARKEY);
             _selectAll = true;
-        } else if (_lookahead.type == TokenType::IDENTIFIER) {
+        } else if (_lookahead.type == TokenType::IDENTIFIER || _lookahead.type == TokenType::SUM || _lookahead.type == TokenType::MIN || _lookahead.type == TokenType::MAX || _lookahead.type == TokenType::AVG || _lookahead.type == TokenType::COUNT) {
             _selectAll = false;
-            Col col = _parseCol();
+            
+            Col col = _parseSeCol();
             _selector.push_back(col);
             
             while (_lookahead.type == TokenType::COMMA) {
                 _parseLabel(TokenType::COMMA);
-                col = _parseCol();
+                col = _parseSeCol();
                 _selector.push_back(col);
             }
             

@@ -59,6 +59,7 @@ public:
     
 public:
     void _selectDouble(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause);
+    void _multiSelect(std::vector<std::string> &tbList, std::vector<Col> &selector, bool selectAll, std::vector<WhereClause> &whereClause, std::vector<AttrType> curType, std::vector<std::string> curData, int &findCount);
     void _modifyDBFile();
     bool _checkAttrInfo(const std::vector<AttrInfo> &attributes);
     void _openTable(const std::string tbName);
@@ -75,6 +76,10 @@ private:
     std::map<std::string, TableHandle> _tableHandles;
     int _fileID; //id for dbf file
     bool _open;
+    
+    std::map<std::string, std::vector<AttrInfo>> _tbInfos;
+    std::vector<std::string> _selectorNames;
+    bool _multiInit;
 };
 
 

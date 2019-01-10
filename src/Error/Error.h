@@ -19,6 +19,7 @@ public:
         DELETE_ERROR,
         LEXER_ERROR,
         PARSER_ERROR,
+        SELECT_ERROR,
     };
     
     Error(std::string errorMsg, ErrorType type): _errorMsg(std::move(errorMsg)), _type(type) { }

@@ -37,7 +37,12 @@ namespace parser
             {"AND",        TokenType::AND},
             {"DATE",       TokenType::DATE},
             {"FLOAT",      TokenType::FLOAT},
-            {"FOREIGN",    TokenType::FOREIGN}
+            {"FOREIGN",    TokenType::FOREIGN},
+            {"AVG",     TokenType::AVG},
+            {"SUM",     TokenType::SUM},
+            {"MIN",     TokenType::MIN},
+            {"MAX",     TokenType::MAX},
+            {"COUNT",   TokenType::COUNT}
     };
     
     Token Lexer::next()

@@ -59,6 +59,12 @@ namespace parser
         PERIOD,
         STARKEY,
         
+        SUM,
+        MIN,
+        MAX,
+        COUNT,
+        AVG,
+        
         EQ,
         NE,
         LT,

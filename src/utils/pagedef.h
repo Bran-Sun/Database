@@ -93,4 +93,5 @@ enum ComOp {
 
 int TypeComp(const void *p1, const void *p2, AttrType type, int attrlength);
 bool TypeCompWithComOp(const void *p1, const void *p2, AttrType attrType, ComOp op, int attrlength);
+ComOp reverseCom(ComOp comOp);
 #endif
